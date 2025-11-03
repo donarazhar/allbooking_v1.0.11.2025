@@ -22,10 +22,9 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Filter Status</label>
                 <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                     <option value="">Semua Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="disetujui">Disetujui</option>
-                    <option value="ditolak">Ditolak</option>
-                    <option value="selesai">Selesai</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    
                 </select>
             </div>
         </div>
@@ -36,7 +35,7 @@
         @forelse($bookings as $booking)
         <div class="booking-card bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
              data-acara="{{ strtolower($booking->bukaJadwal->jenisAcara->nama ?? '') }}"
-             data-status="{{ $booking->status_booking }}">
+             data-status="{{ $booking->status_bookings }}">
             <div class="p-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <!-- Left Side -->
@@ -48,21 +47,18 @@
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-2">
                                     <h3 class="text-lg font-bold text-gray-900">{{ $booking->bukaJadwal->jenisAcara->nama ?? '-' }}</h3>
-                                    @if($booking->status_booking === 'pending')
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                                            <i class="fas fa-clock mr-1"></i>Pending
-                                        </span>
-                                    @elseif($booking->status_booking === 'disetujui')
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                            <i class="fas fa-check-circle mr-1"></i>Disetujui
-                                        </span>
-                                    @elseif($booking->status_booking === 'ditolak')
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                                            <i class="fas fa-times-circle mr-1"></i>Ditolak
+                                    @php
+                                        $isExpired = $booking->tgl_expired_booking && \Carbon\Carbon::now()->isAfter($booking->tgl_expired_booking);
+                                        $statusDisplay = $isExpired ? 'inactive' : 'active';
+                                    @endphp
+                                    
+                                    @if($statusDisplay === 'active')
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                            <i class="fas fa-check-circle mr-1"></i>Active
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                            <i class="fas fa-flag-checkered mr-1"></i>Selesai
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                            <i class="fas fa-times-circle mr-1"></i>Inactive
                                         </span>
                                     @endif
                                 </div>
@@ -103,7 +99,7 @@
                             <i class="fas fa-eye mr-1"></i>Detail
                         </button>
                         
-                        @if($booking->status_booking === 'pending')
+                        @if($booking->status_bookings === 'inactive')
                         <span class="text-xs text-gray-500">
                             <i class="fas fa-hourglass-half mr-1"></i>Menunggu konfirmasi admin
                         </span>
@@ -185,6 +181,38 @@
                     <p class="text-gray-700" id="detail_keterangan">-</p>
                 </div>
             </div>
+
+            <!-- Riwayat Pembayaran -->
+            <div class="border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-gray-900">
+                        <i class="fas fa-receipt text-primary mr-2"></i>Riwayat Pembayaran
+                    </h4>
+                    <span class="text-sm text-gray-600" id="detail_total_pembayaran">Total: Rp 0</span>
+                </div>
+                <div id="detail_pembayaran_list" class="space-y-2">
+                    <!-- Payment list will be inserted here -->
+                </div>
+                <div id="detail_no_pembayaran" class="text-center py-4 text-gray-500 text-sm hidden">
+                    Belum ada pembayaran
+                </div>
+            </div>
+
+            <!-- Next Payment Action -->
+            <div id="detail_next_payment" class="border-t border-gray-200 pt-4 hidden">
+                <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-green-500 mr-3 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="font-medium text-green-900 mb-1">Langkah Selanjutnya:</p>
+                            <p class="text-sm text-green-800" id="detail_next_action">-</p>
+                            <a href="{{ route('user.bayar') }}" class="inline-block mt-3 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium">
+                                <i class="fas fa-wallet mr-1"></i>Bayar Sekarang
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-200">
@@ -209,12 +237,90 @@ function viewDetail(data) {
     document.getElementById('detail_keterangan').textContent = data.keterangan || 'Tidak ada keterangan';
     
     const statusBadges = {
-        'pending': '<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700"><i class="fas fa-clock mr-2"></i>Pending</span>',
-        'disetujui': '<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-700"><i class="fas fa-check-circle mr-2"></i>Disetujui</span>',
-        'ditolak': '<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-700"><i class="fas fa-times-circle mr-2"></i>Ditolak</span>',
-        'selesai': '<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-700"><i class="fas fa-flag-checkered mr-2"></i>Selesai</span>'
+        'active': '<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-700"><i class="fas fa-check-circle mr-2"></i>Active</span>',
+        'inactive': '<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700"><i class="fas fa-times-circle mr-2"></i>Inactive</span>'
     };
-    document.getElementById('detail_status_badge').innerHTML = statusBadges[data.status_booking] || '';
+    
+    // Determine status based on expired date
+    let statusDisplay = 'active';
+    if (data.tgl_expired_booking) {
+        const expiredDate = new Date(data.tgl_expired_booking);
+        const now = new Date();
+        if (now > expiredDate) {
+            statusDisplay = 'inactive';
+        }
+    }
+    
+    document.getElementById('detail_status_badge').innerHTML = statusBadges[statusDisplay] || statusBadges['active'];
+    
+    // Display payment history
+    const pembayaranList = document.getElementById('detail_pembayaran_list');
+    const noPembayaran = document.getElementById('detail_no_pembayaran');
+    const totalPembayaran = document.getElementById('detail_total_pembayaran');
+    
+    if (data.pembayaran && data.pembayaran.length > 0) {
+        let totalBayar = 0;
+        let html = '';
+        
+        data.pembayaran.forEach(payment => {
+            totalBayar += parseFloat(payment.nominal);
+            const jenisBadge = payment.jenis_bayar === 'DP' ? 'bg-yellow-100 text-yellow-700' : 
+                              payment.jenis_bayar === 'Pelunasan' ? 'bg-green-100 text-green-700' : 
+                              'bg-blue-100 text-blue-700';
+            
+            html += `
+                <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${jenisBadge}">
+                                ${payment.jenis_bayar}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                ${new Date(payment.tgl_pembayaran).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Rp ${new Intl.NumberFormat('id-ID').format(payment.nominal)}</p>
+                    </div>
+                    ${payment.bukti_bayar ? `
+                        <button onclick="event.stopPropagation(); window.open('/uploads/bukti_bayar/${payment.bukti_bayar}', '_blank')" 
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-image"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        pembayaranList.innerHTML = html;
+        totalPembayaran.textContent = 'Total: Rp ' + new Intl.NumberFormat('id-ID').format(totalBayar);
+        noPembayaran.classList.add('hidden');
+    } else {
+        pembayaranList.innerHTML = '';
+        totalPembayaran.textContent = 'Total: Rp 0';
+        noPembayaran.classList.remove('hidden');
+    }
+    
+    // Determine next payment action
+    const nextPayment = document.getElementById('detail_next_payment');
+    const nextAction = document.getElementById('detail_next_action');
+    
+    if (data.status_booking === 'disetujui' || data.status_booking === 'active') {
+        const sudahBayarDP = data.pembayaran && data.pembayaran.some(p => p.jenis_bayar === 'DP');
+        const sudahPelunasan = data.pembayaran && data.pembayaran.some(p => p.jenis_bayar === 'Pelunasan');
+        
+        if (!sudahBayarDP) {
+            nextAction.innerHTML = '<strong>Bayar DP (Down Payment)</strong> untuk mengaktifkan booking Anda dan menghilangkan tanggal expired.';
+            nextPayment.classList.remove('hidden');
+        } else if (!sudahPelunasan) {
+            const terminCount = data.pembayaran.filter(p => p.jenis_bayar.includes('Termin')).length;
+            nextAction.innerHTML = `Anda sudah membayar DP. Selanjutnya bisa bayar <strong>Termin ${terminCount + 1}</strong> atau langsung <strong>Pelunasan</strong>.`;
+            nextPayment.classList.remove('hidden');
+        } else {
+            nextPayment.classList.add('hidden');
+        }
+    } else {
+        nextPayment.classList.add('hidden');
+    }
     
     document.getElementById('detailModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -231,7 +337,7 @@ document.getElementById('statusFilter').addEventListener('change', filterBooking
 
 function filterBookings() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const status = document.getElementById('statusFilter').value;
+    const status_bookings = document.getElementById('statusFilter').value;
     
     const cards = document.querySelectorAll('.booking-card');
     
@@ -240,7 +346,7 @@ function filterBookings() {
         const cardStatus = card.getAttribute('data-status');
         
         const matchSearch = acara.includes(searchTerm);
-        const matchStatus = !status || cardStatus === status;
+        const matchStatus = !status_bookings || cardStatus === status_bookings;
         
         if (matchSearch && matchStatus) {
             card.style.display = '';

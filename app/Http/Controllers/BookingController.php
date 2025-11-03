@@ -9,18 +9,27 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
+// Controller untuk mengelola data booking dari sisi Admin.
 class BookingController extends Controller
 {
+    /**
+     * Menampilkan daftar semua booking.
+     */
     public function index()
     {
+        // Mengambil data booking beserta relasi-relasinya.
         $bookings = Booking::with(['bukaJadwal.sesi', 'bukaJadwal.jenisAcara', 'user', 'catering'])
             ->orderBy('tanggal_booking', 'desc')
             ->get();
         return view('transaksi.booking.index', compact('bookings'));
     }
 
+    /**
+     * Menyimpan data booking baru.
+     */
     public function store(Request $request)
     {
+        // Validasi input.
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'tanggal_booking' => 'required|date',
@@ -29,23 +38,30 @@ class BookingController extends Controller
             'status_bookings' => 'required|in:active,inactive',
             'keterangan' => 'nullable|string'
         ], [
+            // Pesan error kustom.
             'user_id.required' => 'User harus dipilih',
             'tanggal_booking.required' => 'Tanggal booking harus diisi',
             'buka_jadwal_id.required' => 'Jadwal harus dipilih',
             'status_bookings.required' => 'Status harus dipilih'
         ]);
 
-        // Auto-calculate tgl_expired_booking (2 minggu dari tanggal booking)
+        // Menghitung otomatis tanggal expired, yaitu 2 minggu dari tanggal booking.
         $validated['tgl_expired_booking'] = Carbon::parse($validated['tanggal_booking'])->addWeeks(2);
 
+        // Membuat data booking.
         Booking::create($validated);
 
+        // Redirect dengan pesan sukses.
         return redirect()->route('booking.index')
             ->with('success', 'Booking berhasil ditambahkan! Batas pembayaran: ' . Carbon::parse($validated['tgl_expired_booking'])->format('d M Y'));
     }
 
+    /**
+     * Mengupdate data booking yang ada.
+     */
     public function update(Request $request, Booking $booking)
     {
+        // Validasi input.
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'tanggal_booking' => 'required|date',
@@ -60,17 +76,21 @@ class BookingController extends Controller
             'status_bookings.required' => 'Status harus dipilih'
         ]);
 
-        // Recalculate tgl_expired_booking jika tanggal_booking berubah
+        // Hitung ulang tanggal expired jika tanggal booking diubah.
         if ($booking->tanggal_booking != $validated['tanggal_booking']) {
             $validated['tgl_expired_booking'] = Carbon::parse($validated['tanggal_booking'])->addWeeks(2);
         }
 
+        // Update data.
         $booking->update($validated);
 
         return redirect()->route('booking.index')
             ->with('success', 'Booking berhasil diupdate!');
     }
 
+    /**
+     * Menghapus data booking.
+     */
     public function destroy(Booking $booking)
     {
         try {
@@ -83,6 +103,9 @@ class BookingController extends Controller
         }
     }
 
+    /**
+     * Mengubah status booking secara spesifik (misal: dari modal).
+     */
     public function updateStatus(Request $request, Booking $booking)
     {
         $validated = $request->validate([

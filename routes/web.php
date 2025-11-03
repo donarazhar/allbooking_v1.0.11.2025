@@ -37,6 +37,8 @@ Route::middleware(['auth', 'checkrole:User'])->prefix('user')->name('user.')->gr
     Route::put('/profile/password', [UserDashboardController::class, 'updatePassword'])->name('profile.password');
     Route::get('/booking', [UserDashboardController::class, 'booking'])->name('booking');
     Route::post('/booking', [UserDashboardController::class, 'storeBooking'])->name('booking.store');
+    Route::get('/bayar', [UserDashboardController::class, 'bayar'])->name('bayar');
+    Route::post('/bayar', [UserDashboardController::class, 'storeBayar'])->name('bayar.store');
     Route::get('/my-bookings', [UserDashboardController::class, 'myBookings'])->name('my-bookings');
 });
 

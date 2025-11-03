@@ -1,6 +1,6 @@
 @extends('layouts.user')
 
-@section('title', 'Booking Aula - Sistem Manajemen Aula')
+@section('title', 'Jadwal Aula - Sistem Manajemen Aula')
 
 @section('content')
 <div class="space-y-6">
@@ -24,19 +24,56 @@
 
     <!-- Page Header -->
     <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl shadow-lg p-8 text-white">
-        <h1 class="text-3xl font-bold mb-2">Booking Aula</h1>
-        <p class="text-blue-100">Pilih jadwal yang tersedia dan buat booking Anda sekarang</p>
+        <h1 class="text-3xl font-bold mb-2">Jadwal Aula Tersedia</h1>
+        <p class="text-blue-100">Lihat jadwal tersedia dan buat booking Anda</p>
     </div>
 
     <!-- Filter Section -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Cari Tanggal</label>
-                <input type="date" id="filterTanggal" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-calendar text-primary mr-1"></i>
+                    Bulan
+                </label>
+                <select id="filterBulan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">Semua Bulan</option>
+                    <option value="01">Januari</option>
+                    <option value="02">Februari</option>
+                    <option value="03">Maret</option>
+                    <option value="04">April</option>
+                    <option value="05">Mei</option>
+                    <option value="06">Juni</option>
+                    <option value="07">Juli</option>
+                    <option value="08">Agustus</option>
+                    <option value="09">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Filter Jenis Acara</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-calendar-alt text-primary mr-1"></i>
+                    Tahun
+                </label>
+                <select id="filterTahun" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">Semua Tahun</option>
+                    @php
+                        $currentYear = date('Y');
+                        $startYear = $currentYear;
+                        $endYear = $currentYear + 2;
+                    @endphp
+                    @for($year = $startYear; $year <= $endYear; $year++)
+                    <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>{{ $year }}</option>
+                    @endfor
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-list text-primary mr-1"></i>
+                    Filter Jenis Acara
+                </label>
                 <select id="filterJenis" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                     <option value="">Semua Jenis Acara</option>
                     @foreach(\App\Models\JenisAcara::all() as $jenis)
@@ -45,7 +82,10 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Filter Sesi</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-clock text-primary mr-1"></i>
+                    Filter Sesi
+                </label>
                 <select id="filterSesi" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                     <option value="">Semua Sesi</option>
                     @foreach(\App\Models\Sesi::all() as $sesi)
@@ -54,80 +94,102 @@
                 </select>
             </div>
         </div>
-        <div class="mt-4 flex justify-end">
-            <button onclick="resetFilter()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+        <div class="mt-4 flex justify-between items-center">
+            <span class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1"></i>
+                Ditemukan: <span id="countJadwal" class="font-semibold text-primary">{{ $jadwalTersedia->count() }}</span> jadwal
+            </span>
+            <button onclick="resetFilter()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                 <i class="fas fa-redo mr-2"></i>Reset Filter
             </button>
         </div>
     </div>
 
-    <!-- Available Schedules -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">
-                <i class="fas fa-calendar-check text-primary mr-2"></i>
-                Jadwal Tersedia
-            </h2>
-            <span class="text-sm text-gray-600">
-                <i class="fas fa-info-circle mr-1"></i>
-                <span id="countJadwal">{{ $jadwalTersedia->count() }}</span> jadwal tersedia
-            </span>
-        </div>
+    <!-- Jadwal Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-calendar-day mr-1"></i>Hari & Tanggal
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-info-circle mr-1"></i>Jenis Acara & Sesi
+                        </th>
+                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-cog mr-1"></i>Aksi
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="jadwalTableBody" class="divide-y divide-gray-200">
+                    @forelse($jadwalTersedia as $jadwal)
+                    @php
+                        $tanggalCarbon = \Carbon\Carbon::parse($jadwal->tanggal);
+                        $bulan = $tanggalCarbon->format('m'); // 01-12
+                        $tahun = $tanggalCarbon->format('Y'); // 2025
+                    @endphp
+                    <tr class="jadwal-row hover:bg-gray-50 transition-colors"
+                        data-bulan="{{ $bulan }}"
+                        data-tahun="{{ $tahun }}"
+                        data-jenis="{{ $jadwal->jenisAcara->nama ?? '' }}"
+                        data-sesi="{{ $jadwal->sesi->nama ?? '' }}">
+                        
+                        <!-- Hari & Tanggal -->
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ $jadwal->hari }}</p>
+                                    <p class="text-xs text-gray-600">{{ $tanggalCarbon->format('d M Y') }}</p>
+                                </div>
+                            </div>
+                        </td>
 
-        <div id="jadwalContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($jadwalTersedia as $jadwal)
-            <div class="jadwal-card border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300 overflow-hidden"
-                 data-tanggal="{{ $jadwal->tanggal }}"
-                 data-jenis="{{ $jadwal->jenisAcara->nama ?? '' }}"
-                 data-sesi="{{ $jadwal->sesi->nama ?? '' }}">
-                
-                <!-- Card Header -->
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="inline-flex items-center px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <i class="fas fa-calendar-day mr-1"></i>{{ $jadwal->hari }}
-                        </span>
-                        <span class="text-sm opacity-90">{{ \Carbon\Carbon::parse($jadwal->tanggal)->format('d M Y') }}</span>
-                    </div>
-                    <h3 class="text-xl font-bold">{{ $jadwal->jenisAcara->nama ?? '-' }}</h3>
-                </div>
+                        <!-- Jenis Acara & Sesi -->
+                        <td class="px-6 py-4">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900 mb-1">
+                                    <i class="fas fa-tag text-primary mr-1"></i>
+                                    {{ $jadwal->jenisAcara->nama ?? '-' }}
+                                </p>
+                                <p class="text-xs text-gray-600">
+                                    <i class="fas fa-clock text-gray-400 mr-1"></i>
+                                    {{ $jadwal->sesi->nama ?? '-' }}
+                                    <span class="text-gray-400 mx-1">•</span>
+                                    {{ $jadwal->sesi->jam_mulai ?? '' }} - {{ $jadwal->sesi->jam_selesai ?? '' }}
+                                </p>
+                                @if($jadwal->keterangan)
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    {{ Str::limit($jadwal->keterangan, 50) }}
+                                </p>
+                                @endif
+                            </div>
+                        </td>
 
-                <!-- Card Body -->
-                <div class="p-4 space-y-3">
-                    <div class="flex items-center text-gray-700">
-                        <div class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                            <i class="fas fa-clock text-blue-600"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Sesi</p>
-                            <p class="font-semibold">{{ $jadwal->sesi->nama ?? '-' }}</p>
-                            <p class="text-xs text-gray-600">{{ $jadwal->sesi->jam_mulai ?? '' }} - {{ $jadwal->sesi->jam_selesai ?? '' }}</p>
-                        </div>
-                    </div>
-
-                    @if($jadwal->keterangan)
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <p class="text-xs text-gray-500 mb-1">Keterangan:</p>
-                        <p class="text-sm text-gray-700">{{ $jadwal->keterangan }}</p>
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Card Footer -->
-                <div class="px-4 pb-4">
-                    <button onclick="openBookingModal({{ json_encode($jadwal) }})" 
-                            class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                        <i class="fas fa-calendar-plus mr-2"></i>Booking Sekarang
-                    </button>
-                </div>
-            </div>
-            @empty
-            <div class="col-span-full text-center py-16">
-                <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">Tidak Ada Jadwal Tersedia</h3>
-                <p class="text-gray-500">Silakan coba lagi nanti atau hubungi admin</p>
-            </div>
-            @endforelse
+                        <!-- Aksi -->
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="openBookingModal({{ json_encode($jadwal) }})" 
+                                    class="inline-flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                <i class="fas fa-calendar-check mr-2"></i>
+                                Book
+                            </button>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center">
+                            <i class="fas fa-calendar-times text-gray-400 text-5xl mb-3"></i>
+                            <p class="text-gray-600 font-medium mb-1">Tidak Ada Jadwal Tersedia</p>
+                            <p class="text-gray-500 text-sm">Silakan coba lagi nanti atau hubungi admin</p>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -139,20 +201,20 @@
             </h3>
             <ol class="text-sm text-blue-800 space-y-2">
                 <li class="flex items-start">
-                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs">1</span>
-                    <span>Pilih jadwal yang tersedia di atas</span>
+                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs font-semibold">1</span>
+                    <span>Pilih jadwal yang tersedia di tabel</span>
                 </li>
                 <li class="flex items-start">
-                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs">2</span>
+                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs font-semibold">2</span>
+                    <span>Klik tombol "Book" untuk membuka form</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs font-semibold">3</span>
                     <span>Isi form booking dengan lengkap</span>
                 </li>
                 <li class="flex items-start">
-                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs">3</span>
+                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs font-semibold">4</span>
                     <span>Tunggu konfirmasi dari admin (maks 1x24 jam)</span>
-                </li>
-                <li class="flex items-start">
-                    <span class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-2 flex-shrink-0 text-xs">4</span>
-                    <span>Cek status booking di menu "Booking Saya"</span>
                 </li>
             </ol>
         </div>
@@ -302,32 +364,36 @@ function closeModal() {
 }
 
 // Filter functionality
-document.getElementById('filterTanggal').addEventListener('change', filterJadwal);
+document.getElementById('filterBulan').addEventListener('change', filterJadwal);
+document.getElementById('filterTahun').addEventListener('change', filterJadwal);
 document.getElementById('filterJenis').addEventListener('change', filterJadwal);
 document.getElementById('filterSesi').addEventListener('change', filterJadwal);
 
 function filterJadwal() {
-    const tanggal = document.getElementById('filterTanggal').value;
+    const bulan = document.getElementById('filterBulan').value;
+    const tahun = document.getElementById('filterTahun').value;
     const jenis = document.getElementById('filterJenis').value.toLowerCase();
     const sesi = document.getElementById('filterSesi').value.toLowerCase();
     
-    const cards = document.querySelectorAll('.jadwal-card');
+    const rows = document.querySelectorAll('.jadwal-row');
     let visibleCount = 0;
     
-    cards.forEach(card => {
-        const cardTanggal = card.getAttribute('data-tanggal');
-        const cardJenis = card.getAttribute('data-jenis').toLowerCase();
-        const cardSesi = card.getAttribute('data-sesi').toLowerCase();
+    rows.forEach(row => {
+        const rowBulan = row.getAttribute('data-bulan');
+        const rowTahun = row.getAttribute('data-tahun');
+        const rowJenis = row.getAttribute('data-jenis').toLowerCase();
+        const rowSesi = row.getAttribute('data-sesi').toLowerCase();
         
-        const matchTanggal = !tanggal || cardTanggal === tanggal;
-        const matchJenis = !jenis || cardJenis.includes(jenis);
-        const matchSesi = !sesi || cardSesi.includes(sesi);
+        const matchBulan = !bulan || rowBulan === bulan;
+        const matchTahun = !tahun || rowTahun === tahun;
+        const matchJenis = !jenis || rowJenis.includes(jenis);
+        const matchSesi = !sesi || rowSesi.includes(sesi);
         
-        if (matchTanggal && matchJenis && matchSesi) {
-            card.style.display = '';
+        if (matchBulan && matchTahun && matchJenis && matchSesi) {
+            row.style.display = '';
             visibleCount++;
         } else {
-            card.style.display = 'none';
+            row.style.display = 'none';
         }
     });
     
@@ -335,7 +401,8 @@ function filterJadwal() {
 }
 
 function resetFilter() {
-    document.getElementById('filterTanggal').value = '';
+    document.getElementById('filterBulan').value = '';
+    document.getElementById('filterTahun').value = '{{ date("Y") }}';
     document.getElementById('filterJenis').value = '';
     document.getElementById('filterSesi').value = '';
     filterJadwal();
@@ -364,5 +431,10 @@ setTimeout(() => {
         setTimeout(() => alert.remove(), 500);
     });
 }, 5000);
+
+// Auto filter on page load (current year)
+window.addEventListener('DOMContentLoaded', function() {
+    filterJadwal();
+});
 </script>
 @endsection

@@ -3,9 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    {{-- BLOK 1: JUDUL & ASET --}}
+    {{-- @yield('title') akan menampilkan judul spesifik dari halaman anak (child view). --}}
+    {{-- Jika tidak ada, judul default 'Sistem Manajemen Aula' akan digunakan. --}}
     <title>@yield('title', 'Sistem Manajemen Aula')</title>
+
+    {{-- Memuat library Tailwind CSS dari CDN untuk styling. --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Konfigurasi custom untuk Tailwind CSS, menambahkan warna 'primary'.
         tailwind.config = {
             theme: {
                 extend: {
@@ -16,7 +23,10 @@
             }
         }
     </script>
+    {{-- Memuat library Font Awesome untuk ikon. --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {{-- Style tambahan untuk link sidebar, terutama untuk state 'hover' dan 'active'. --}}
     <style>
         .sidebar-link:hover {
             background-color: #f3f4f6;
@@ -32,109 +42,105 @@
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
+        
+        {{-- BLOK 2: SIDEBAR NAVIGASI --}}
+        {{-- Sidebar ini akan tersembunyi di layar kecil (mobile) dan muncul di layar medium (md) ke atas. --}}
         <aside id="sidebar" class="w-64 bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out fixed md:static h-full z-30">
             <div class="h-full flex flex-col">
-                <!-- Logo -->
+                {{-- Bagian Logo Aplikasi --}}
                 <div class="p-6 border-b border-gray-200">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                             <i class="fas fa-building text-white text-xl"></i>
                         </div>
                         <div>
-                            <h1 class="text-xl font-bold text-gray-800">Aula</h1>
+                            <h1 class="text-xl font-bold text-gray-800">Booking Aula</h1>
                             <p class="text-xs text-gray-500">Management System</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Navigation -->
+                {{-- Daftar Menu Navigasi --}}
                 <nav class="flex-1 overflow-y-auto p-4 space-y-1">
-                    <!-- Dashboard -->
+                    {{-- Link ke Dashboard --}}
+                    {{-- Kelas 'active' ditambahkan jika URL saat ini cocok dengan 'dashboard' --}}
                     <a href="/dashboard" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home w-5"></i>
                         <span class="font-medium">Dashboard</span>
                     </a>
 
-                    <!-- Master Data -->
+                    {{-- Grup Menu Master Data (Collapsible) --}}
                     <div class="pt-4 pb-2">
                         <button onclick="toggleMenu('masterData')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
                             <span>Master Data</span>
                             <i id="masterData-icon" class="fas fa-chevron-down transition-transform duration-200"></i>
                         </button>
                     </div>
-                    
                     <div id="masterData-menu" class="space-y-1 overflow-hidden transition-all duration-300">
+                        {{-- Link-link di dalam Master Data --}}
                         <a href="/master/sesi" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/sesi*') ? 'active' : '' }}">
                             <i class="fas fa-clock w-5"></i>
                             <span class="font-medium">Sesi</span>
                         </a>
-
                         <a href="/master/jenis-acara" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/jenis-acara*') ? 'active' : '' }}">
                             <i class="fas fa-list w-5"></i>
                             <span class="font-medium">Jenis Acara</span>
                         </a>
-
                         <a href="/master/catering" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/catering*') ? 'active' : '' }}">
                             <i class="fas fa-utensils w-5"></i>
                             <span class="font-medium">Rekanan Catering</span>
                         </a>
-
                         <a href="/master/role" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/role*') ? 'active' : '' }}">
                             <i class="fas fa-user-tag w-5"></i>
                             <span class="font-medium">Role</span>
                         </a>
                     </div>
 
-                    <!-- Users -->
+                    {{-- Grup Menu Manajemen --}}
                     <div class="pt-4 pb-2">
                         <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Manajemen</p>
                     </div>
-                    
                     <a href="/users" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('users*') ? 'active' : '' }}">
                         <i class="fas fa-users w-5"></i>
                         <span class="font-medium">User</span>
                     </a>
 
-                    <!-- Transaksi -->
+                    {{-- Grup Menu Transaksi (Collapsible) --}}
                     <div class="pt-4 pb-2">
                         <button onclick="toggleMenu('transaksi')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
                             <span>Transaksi</span>
                             <i id="transaksi-icon" class="fas fa-chevron-down transition-transform duration-200"></i>
                         </button>
                     </div>
-                    
                     <div id="transaksi-menu" class="space-y-1 overflow-hidden transition-all duration-300">
+                        {{-- Link-link di dalam Transaksi --}}
                         <a href="/transaksi/buka-jadwal" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('transaksi/buka-jadwal*') ? 'active' : '' }}">
                             <i class="fas fa-calendar-check w-5"></i>
                             <span class="font-medium">Buka Jadwal</span>
                         </a>
-                        
                         <a href="/transaksi/booking" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('transaksi/booking*') ? 'active' : '' }}">
                             <i class="fas fa-bookmark w-5"></i>
                             <span class="font-medium">Booking</span>
                         </a>
-
                         <a href="/transaksi/pembayaran" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('transaksi/pembayaran*') ? 'active' : '' }}">
                             <i class="fas fa-money-bill-wave w-5"></i>
                             <span class="font-medium">Pembayaran</span>
                         </a>
                     </div>
 
-                    <!-- Laporan -->
+                    {{-- Grup Menu Laporan (Collapsible) --}}
                     <div class="pt-4 pb-2">
                         <button onclick="toggleMenu('laporan')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
                             <span>Laporan</span>
                             <i id="laporan-icon" class="fas fa-chevron-down transition-transform duration-200"></i>
                         </button>
                     </div>
-                    
                     <div id="laporan-menu" class="space-y-1 overflow-hidden transition-all duration-300">
+                        {{-- Link-link di dalam Laporan --}}
                         <a href="/laporan/pengguna" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('laporan/pengguna*') ? 'active' : '' }}">
                             <i class="fas fa-file-alt w-5"></i>
                             <span class="font-medium">Laporan Pengguna</span>
                         </a>
-
                         <a href="/laporan/keuangan" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('laporan/keuangan*') ? 'active' : '' }}">
                             <i class="fas fa-chart-line w-5"></i>
                             <span class="font-medium">Laporan Keuangan</span>
@@ -142,16 +148,18 @@
                     </div>
                 </nav>
 
-                <!-- User Info -->
+                {{-- Informasi User dan Tombol Logout di bagian bawah sidebar --}}
                 <div class="p-4 border-t border-gray-200">
                     <div class="flex items-center space-x-3 px-4 py-3">
                         <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                            {{-- Menampilkan inisial 2 huruf dari nama user --}}
                             <span class="text-white text-sm font-bold">{{ strtoupper(substr(Auth::user()->nama ?? 'A', 0, 2)) }}</span>
                         </div>
                         <div class="flex-1">
                             <p class="text-sm font-medium text-gray-800">{{ Auth::user()->nama ?? 'User' }}</p>
                             <p class="text-xs text-gray-500">{{ Auth::user()->email ?? '-' }}</p>
                         </div>
+                        {{-- Tombol Logout --}}
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
                             <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors" title="Logout">
@@ -163,22 +171,26 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
+        {{-- BLOK 3: KONTEN UTAMA --}}
         <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Navbar -->
+            {{-- Navbar Atas (Header) --}}
             <header class="bg-white shadow-sm z-20">
                 <div class="flex items-center justify-between px-6 py-4">
                     <div class="flex items-center space-x-4">
+                        {{-- Tombol untuk menampilkan/menyembunyikan sidebar di mode mobile --}}
                         <button id="sidebar-toggle" class="md:hidden text-gray-600 hover:text-gray-800">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
+                        {{-- @yield('page-title') akan menampilkan judul halaman yang spesifik. --}}
                         <h2 class="text-2xl font-bold text-gray-800">@yield('page-title', 'Dashboard')</h2>
                     </div>
                     <div class="flex items-center space-x-4">
+                        {{-- Ikon Notifikasi --}}
                         <button class="relative text-gray-600 hover:text-gray-800">
                             <i class="fas fa-bell text-xl"></i>
                             <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">3</span>
                         </button>
+                        {{-- Avatar User --}}
                         <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center cursor-pointer" title="{{ Auth::user()->nama ?? 'User' }}">
                             <span class="text-white text-sm font-bold">{{ strtoupper(substr(Auth::user()->nama ?? 'A', 0, 2)) }}</span>
                         </div>
@@ -186,18 +198,19 @@
                 </div>
             </header>
 
-            <!-- Page Content -->
+            {{-- Tempat untuk konten halaman anak (child view) akan dimasukkan --}}
             <main class="flex-1 overflow-y-auto p-6">
                 @yield('content')
             </main>
         </div>
     </div>
 
-    <!-- Overlay untuk mobile -->
+    {{-- Overlay hitam transparan untuk background saat sidebar mobile aktif --}}
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
 
+    {{-- BLOK 4: JAVASCRIPT --}}
     <script>
-        // Toggle sidebar on mobile
+        {{-- Logika untuk toggle sidebar di mode mobile --}}
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -212,27 +225,28 @@
             sidebarOverlay.classList.add('hidden');
         });
 
-        // Toggle collapsible menu
+        {{-- Logika untuk membuka/menutup menu dropdown di sidebar --}}
         function toggleMenu(menuId) {
             const menu = document.getElementById(menuId + '-menu');
             const icon = document.getElementById(menuId + '-icon');
             
             if (menu.style.maxHeight && menu.style.maxHeight !== '0px') {
-                // Close menu
+                // Jika menu terbuka, tutup menu.
                 menu.style.maxHeight = '0px';
                 icon.classList.remove('fa-chevron-up');
                 icon.classList.add('fa-chevron-down');
-                localStorage.setItem(menuId + '-collapsed', 'true');
+                localStorage.setItem(menuId + '-collapsed', 'true'); // Simpan state ke localStorage
             } else {
-                // Open menu
+                // Jika menu tertutup, buka menu.
                 menu.style.maxHeight = menu.scrollHeight + 'px';
                 icon.classList.remove('fa-chevron-down');
                 icon.classList.add('fa-chevron-up');
-                localStorage.setItem(menuId + '-collapsed', 'false');
+                localStorage.setItem(menuId + '-collapsed', 'false'); // Simpan state ke localStorage
             }
         }
 
-        // Initialize menu states on page load
+        {{-- Inisialisasi state menu (terbuka/tertutup) saat halaman dimuat --}}
+        {{-- Ini akan membaca state dari localStorage yang disimpan oleh fungsi toggleMenu --}}
         document.addEventListener('DOMContentLoaded', function() {
             const menus = ['masterData', 'transaksi', 'laporan'];
             
@@ -246,7 +260,7 @@
                     icon.classList.remove('fa-chevron-up');
                     icon.classList.add('fa-chevron-down');
                 } else {
-                    // Default: Open
+                    // Default saat pertama kali buka atau jika tidak diset 'collapsed' adalah terbuka.
                     menu.style.maxHeight = menu.scrollHeight + 'px';
                     icon.classList.remove('fa-chevron-down');
                     icon.classList.add('fa-chevron-up');

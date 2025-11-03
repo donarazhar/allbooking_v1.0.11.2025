@@ -5,14 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use Illuminate\Http\Request;
 
+/**
+ * Controller ini berfungsi untuk mengelola data master Role (peran pengguna).
+ */
 class RoleController extends Controller
 {
+    /**
+     * Menampilkan halaman daftar semua role.
+     */
     public function index()
     {
         $roles = Role::orderBy('nama', 'asc')->get();
         return view('master.role.index', compact('roles'));
     }
 
+    /**
+     * Menyimpan role baru ke database.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -31,6 +40,9 @@ class RoleController extends Controller
             ->with('success', 'Data role berhasil ditambahkan!');
     }
 
+    /**
+     * Mengupdate data role yang ada di database.
+     */
     public function update(Request $request, Role $role)
     {
         $validated = $request->validate([
@@ -49,6 +61,9 @@ class RoleController extends Controller
             ->with('success', 'Data role berhasil diupdate!');
     }
 
+    /**
+     * Menghapus data role dari database.
+     */
     public function destroy(Role $role)
     {
         try {

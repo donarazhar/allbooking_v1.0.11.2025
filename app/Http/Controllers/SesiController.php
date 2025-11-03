@@ -5,14 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Sesi;
 use Illuminate\Http\Request;
 
+/**
+ * Controller untuk mengelola semua logika terkait data master sesi.
+ */
 class SesiController extends Controller
 {
+    /**
+     * Menampilkan halaman utama yang berisi daftar semua sesi.
+     */
     public function index()
     {
         $sesi = Sesi::orderBy('kode', 'asc')->get();
         return view('master.sesi.index', compact('sesi'));
     }
 
+    /**
+     * Menyimpan data sesi baru yang dikirim dari form.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -31,19 +40,22 @@ class SesiController extends Controller
         ]);
 
         Sesi::create($validated);
-
+      
         return redirect()->route('sesi.index')
             ->with('success', 'Data sesi berhasil ditambahkan!');
     }
 
+    /**
+     * Mengupdate data sesi yang sudah ada berdasarkan ID.
+     */
     public function update(Request $request, Sesi $sesi)
     {
 
         $validated = $request->validate([
             'kode' => 'required|max:10|unique:sesi,kode,' . $sesi->id,
             'nama' => 'required|max:255',
-            'jam_mulai' => 'required|date_format:H:i:s',
-            'jam_selesai' => 'required|date_format:H:i:s|after:jam_mulai',
+            'jam_mulai' => 'required|date_format:H:i',
+            'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'keterangan' => 'nullable|string'
         ], [
             'kode.required' => 'Kode harus diisi',
@@ -55,14 +67,14 @@ class SesiController extends Controller
         ]);
 
         $sesi->update($validated);
-        // After validation, remove seconds
-        $validated['jam_mulai'] = substr($validated['jam_mulai'], 0, 5);
-        $validated['jam_selesai'] = substr($validated['jam_selesai'], 0, 5);
-
+        
         return redirect()->route('sesi.index')
             ->with('success', 'Data sesi berhasil diupdate!');
     }
 
+    /**
+     * Menghapus data sesi dari database berdasarkan ID.
+     */
     public function destroy(Sesi $sesi)
     {
         try {

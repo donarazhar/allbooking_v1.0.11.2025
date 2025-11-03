@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\BukaJadwal;
 use App\Models\User;
+use App\Models\Pembayaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +17,7 @@ class UserDashboardController extends Controller
     {
         $user = Auth::user();
         $totalBooking = Booking::where('user_id', $user->id)->count();
-        $pendingBooking = Booking::where('user_id', $user->id)->where('status_bookings', 'inctive')->count();
+        $pendingBooking = Booking::where('user_id', $user->id)->where('status_bookings', 'inactive')->count();
         $approvedBooking = Booking::where('user_id', $user->id)->where('status_bookings', 'active')->count();
         
         $recentBookings = Booking::with(['bukaJadwal.sesi', 'bukaJadwal.jenisAcara', 'catering'])
@@ -123,7 +124,7 @@ class UserDashboardController extends Controller
         ]);
 
         $validated['user_id'] = Auth::id();
-        $validated['status_bookings'] = 'inactive';
+        $validated['status_booking'] = 'pending';
         $validated['tgl_expired_booking'] = \Carbon\Carbon::parse($validated['tanggal_booking'])->addWeeks(2);
 
         Booking::create($validated);
@@ -134,11 +135,74 @@ class UserDashboardController extends Controller
 
     public function myBookings()
     {
-        $bookings = Booking::with(['bukaJadwal.sesi', 'bukaJadwal.jenisAcara', 'catering'])
+        $bookings = Booking::with(['bukaJadwal.sesi', 'bukaJadwal.jenisAcara', 'catering', 'pembayaran'])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->get();
 
         return view('user.my-bookings', compact('bookings'));
+    }
+
+    public function bayar()
+    {
+        // Get all bookings dari user dengan pembayaran
+        $bookings = Booking::with(['bukaJadwal.sesi', 'bukaJadwal.jenisAcara', 'catering', 'pembayaran'])
+            ->where('user_id', Auth::id())
+            ->whereIn('status_bookings', ['active', 'inactive'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('user.bayar', compact('bookings'));
+    }
+
+    public function storeBayar(Request $request)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+            'tgl_pembayaran' => 'required|date',
+            'jenis_bayar' => 'required|in:DP,Termin 1,Termin 2,Termin 3,Termin 4,Pelunasan',
+            'nominal' => 'required|numeric|min:0',
+            'bukti_bayar' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+        ], [
+            'booking_id.required' => 'Booking harus dipilih',
+            'tgl_pembayaran.required' => 'Tanggal pembayaran harus diisi',
+            'jenis_bayar.required' => 'Jenis bayar harus dipilih',
+            'nominal.required' => 'Nominal harus diisi',
+            'nominal.numeric' => 'Nominal harus berupa angka',
+            'bukti_bayar.required' => 'Bukti bayar harus diupload',
+            'bukti_bayar.image' => 'Bukti bayar harus berupa gambar',
+            'bukti_bayar.max' => 'Ukuran bukti bayar maksimal 2MB'
+        ]);
+
+        // Verify booking belongs to current user
+        $booking = Booking::where('id', $validated['booking_id'])
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$booking) {
+            return back()->with('error', 'Booking tidak ditemukan!');
+        }
+
+        // Upload bukti bayar
+        if ($request->hasFile('bukti_bayar')) {
+            $file = $request->file('bukti_bayar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/bukti_bayar'), $filename);
+            $validated['bukti_bayar'] = $filename;
+        }
+
+        // Create pembayaran
+        Pembayaran::create($validated);
+
+        // If this is DP payment, update booking status to 'active' and remove expired date
+        if ($validated['jenis_bayar'] === 'DP') {
+            $booking->update([
+                'status_bookings' => 'active',
+                'tgl_expired_booking' => null
+            ]);
+        }
+
+        return redirect()->route('user.bayar')
+            ->with('success', 'Pembayaran berhasil diajukan! Admin akan memverifikasi pembayaran Anda.');
     }
 }

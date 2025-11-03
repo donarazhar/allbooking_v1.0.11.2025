@@ -5,14 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\JenisAcara;
 use Illuminate\Http\Request;
 
+/**
+ * Controller untuk mengelola data master jenis acara.
+ */
 class JenisAcaraController extends Controller
 {
+    /**
+     * Menampilkan halaman daftar jenis acara.
+     */
     public function index()
     {
         $jenisAcara = JenisAcara::orderBy('kode', 'asc')->get();
         return view('master.jenis-acara.index', compact('jenisAcara'));
     }
 
+    /**
+     * Menyimpan data jenis acara baru.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -28,13 +37,16 @@ class JenisAcaraController extends Controller
             'harga.required' => 'Harga harus diisi',
             'status_jenis_acara.required' => 'Status harus dipilih'
         ]);
-
+       
         JenisAcara::create($validated);
 
         return redirect()->route('jenis-acara.index')
             ->with('success', 'Data jenis acara berhasil ditambahkan!');
     }
 
+    /**
+     * Mengupdate data jenis acara yang ada.
+     */
     public function update(Request $request, JenisAcara $jenisAcara)
     {
         $validated = $request->validate([
@@ -57,6 +69,9 @@ class JenisAcaraController extends Controller
             ->with('success', 'Data jenis acara berhasil diupdate!');
     }
 
+    /**
+     * Menghapus data jenis acara.
+     */
     public function destroy(JenisAcara $jenisAcara)
     {
         try {
@@ -69,6 +84,9 @@ class JenisAcaraController extends Controller
         }
     }
 
+    /**
+     * Mengubah status aktif/tidak aktif jenis acara.
+     */
     public function toggleStatus(JenisAcara $jenisAcara)
     {
         $newStatus = $jenisAcara->status_jenis_acara === 'active' ? 'inactive' : 'active';

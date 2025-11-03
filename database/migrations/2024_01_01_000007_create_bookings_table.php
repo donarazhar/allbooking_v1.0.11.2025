@@ -14,7 +14,7 @@ return new class extends Migration
             $table->date('tanggal_booking');
             $table->foreignId('buka_jadwal_id')->constrained('buka_jadwal')->onDelete('cascade');
             $table->foreignId('catering_id')->nullable()->constrained('catering')->onDelete('set null');
-            $table->date('tgl_expired_booking');
+            $table->date('tgl_expired_booking')->nullable();
             $table->enum('status_bookings', ['active', 'inactive'])->default('active');
             $table->string('keterangan');
             $table->timestamps();

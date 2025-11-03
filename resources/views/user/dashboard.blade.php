@@ -61,10 +61,10 @@
         <a href="{{ route('user.booking') }}" class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-xl font-bold mb-2">Buat Booking Baru</h3>
-                    <p class="text-blue-100">Lihat jadwal tersedia dan booking sekarang</p>
+                    <h3 class="text-xl font-bold mb-2">Lihat Jadwal Tersedia</h3>
+                    <p class="text-blue-100">Cek jadwal dan buat booking baru</p>
                 </div>
-                <i class="fas fa-plus-circle text-4xl opacity-80"></i>
+                <i class="fas fa-calendar-alt text-4xl opacity-80"></i>
             </div>
         </a>
 
@@ -112,21 +112,18 @@
                     </div>
                 </div>
                 <div class="ml-4">
-                    @if($booking->status_booking === 'pending')
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                            <i class="fas fa-clock mr-1"></i>Pending
-                        </span>
-                    @elseif($booking->status_booking === 'disetujui')
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            <i class="fas fa-check-circle mr-1"></i>Disetujui
-                        </span>
-                    @elseif($booking->status_booking === 'ditolak')
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                            <i class="fas fa-times-circle mr-1"></i>Ditolak
+                    @php
+                        $isExpired = $booking->tgl_expired_booking && \Carbon\Carbon::now()->isAfter($booking->tgl_expired_booking);
+                        $statusDisplay = $isExpired ? 'inactive' : 'active';
+                    @endphp
+                    
+                    @if($statusDisplay === 'active')
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            <i class="fas fa-check-circle mr-1"></i>Active
                         </span>
                     @else
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                            <i class="fas fa-flag-checkered mr-1"></i>Selesai
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            <i class="fas fa-times-circle mr-1"></i>Inactive
                         </span>
                     @endif
                 </div>
@@ -136,7 +133,7 @@
                 <i class="fas fa-inbox text-gray-400 text-4xl mb-3"></i>
                 <p class="text-gray-500">Belum ada booking</p>
                 <a href="{{ route('user.booking') }}" class="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Buat Booking Pertama
+                    <i class="fas fa-calendar-alt mr-2"></i>Lihat Jadwal
                 </a>
             </div>
             @endforelse
