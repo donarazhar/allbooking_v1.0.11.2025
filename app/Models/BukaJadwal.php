@@ -2,37 +2,109 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Model BukaJadwal merepresentasikan jadwal yang tersedia untuk dibooking.
 class BukaJadwal extends Model
 {
-    // Menentukan nama tabel database yang terhubung dengan model ini.
+    use HasFactory;
+
     protected $table = 'buka_jadwal';
 
-    // Mendefinisikan kolom-kolom yang boleh diisi secara massal (mass assignable).
     protected $fillable = [
         'hari',
         'tanggal',
         'sesi_id',
-        'jenisacara_id'
+        'jenisacara_id',
+        'status_jadwal'
     ];
 
-    // Setiap jadwal yang dibuka pasti memiliki satu sesi.
+    protected $casts = [
+        'tanggal' => 'date'
+    ];
+
+    /**
+     * Relasi ke Sesi
+     */
     public function sesi()
     {
-        return $this->belongsTo(Sesi::class);
+        return $this->belongsTo(Sesi::class, 'sesi_id');
     }
 
-    // Setiap jadwal yang dibuka terkait dengan satu jenis acara.
+    /**
+     * Relasi ke Jenis Acara
+     */
     public function jenisAcara()
     {
         return $this->belongsTo(JenisAcara::class, 'jenisacara_id');
     }
 
-    // Satu jadwal yang dibuka bisa memiliki banyak booking (jika sistem mengizinkannya).
+    /**
+     * Relasi ke Transaksi Booking
+     */
     public function bookings()
     {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(Booking::class, 'bukajadwal_id');
+    }
+
+    /**
+     * LOGIC: Auto-determine status berdasarkan booking aktif
+     * 
+     * Jika ada booking dengan status_booking = 'active', maka jadwal = 'booked'
+     * Jika tidak ada booking aktif, maka jadwal = 'available'
+     */
+    public function hasActiveBooking()
+    {
+        return $this->bookings()
+            ->where('status_booking', 'active')
+            ->exists();
+    }
+
+    /**
+     * Get computed status berdasarkan booking
+     */
+    public function getComputedStatusAttribute()
+    {
+        return $this->hasActiveBooking() ? 'booked' : 'available';
+    }
+
+    /**
+     * Sync status jadwal berdasarkan booking aktif
+     * Method ini dipanggil setelah create/update/delete booking
+     */
+    public function syncStatus()
+    {
+        $newStatus = $this->hasActiveBooking() ? 'booked' : 'available';
+        
+        // Only update if status changed
+        if ($this->status_jadwal !== $newStatus) {
+            $this->update(['status_jadwal' => $newStatus]);
+        }
+        
+        return $newStatus;
+    }
+
+    /**
+     * Scope: Only available jadwal
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('status_jadwal', 'available');
+    }
+
+    /**
+     * Scope: Only booked jadwal
+     */
+    public function scopeBooked($query)
+    {
+        return $query->where('status_jadwal', 'booked');
+    }
+
+    /**
+     * Check apakah jadwal bisa dibook
+     */
+    public function isBookable()
+    {
+        return !$this->hasActiveBooking();
     }
 }

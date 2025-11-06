@@ -19,6 +19,7 @@ class Catering extends Model
         'email',
         'no_hp',
         'alamat',
+        'password',
         'foto',
         'keterangan'
     ];

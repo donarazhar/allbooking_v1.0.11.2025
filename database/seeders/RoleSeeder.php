@@ -41,6 +41,7 @@ class RoleSeeder extends Seeder
         User::create([
             'nama' => 'Administrator',
             'email' => 'admin@aula.com',
+            'no_hp' => '081234567221',
             'password' => Hash::make('admin123'),
             'role_id' => $adminRole->id,
             'status_users' => 'active'
@@ -49,6 +50,7 @@ class RoleSeeder extends Seeder
         User::create([
             'nama' => 'Pimpinan',
             'email' => 'pimpinan@aula.com',
+            'no_hp' => '081234567101',
             'password' => Hash::make('pimpinan123'),
             'role_id' => $pimpinanRole->id,
             'status_users' => 'active'
@@ -57,6 +59,7 @@ class RoleSeeder extends Seeder
         User::create([
             'nama' => 'User Demo',
             'email' => 'user@aula.com',
+            'no_hp' => '081234567091',
             'password' => Hash::make('user123'),
             'role_id' => $userRole->id,
             'status_users' => 'active'

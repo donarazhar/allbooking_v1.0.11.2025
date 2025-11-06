@@ -59,6 +59,9 @@
                         <input type="text" name="nama" value="{{ old('nama') }}" required
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="John Doe">
+                        @error('nama')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Email -->
@@ -70,6 +73,40 @@
                         <input type="email" name="email" value="{{ old('email') }}" required
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="nama@email.com">
+                        @error('email')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Nomor HP - DITAMBAHKAN -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-phone mr-2 text-gray-400"></i>
+                            Nomor HP <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="no_hp" value="{{ old('no_hp') }}" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               placeholder="08123456789"
+                               pattern="[0-9]{10,13}"
+                               title="Nomor HP harus 10-13 digit angka">
+                        @error('no_hp')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">Format: 08123456789 (10-13 digit)</p>
+                    </div>
+
+                    <!-- Alamat - OPTIONAL -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                            Alamat
+                        </label>
+                        <textarea name="alamat" rows="2"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                                  placeholder="Alamat lengkap (opsional)">{{ old('alamat') }}</textarea>
+                        @error('alamat')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Password -->
@@ -81,11 +118,16 @@
                         <div class="relative">
                             <input type="password" id="password" name="password" required
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                   placeholder="Min. 6 karakter">
-                            <button type="button" onclick="togglePassword('password', 'toggleIcon1')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                   placeholder="Min. 6 karakter"
+                                   minlength="6">
+                            <button type="button" onclick="togglePassword('password', 'toggleIcon1')" 
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <i id="toggleIcon1" class="fas fa-eye"></i>
                             </button>
                         </div>
+                        @error('password')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Konfirmasi Password -->
@@ -97,11 +139,16 @@
                         <div class="relative">
                             <input type="password" id="password_confirmation" name="password_confirmation" required
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                   placeholder="Ulangi password">
-                            <button type="button" onclick="togglePassword('password_confirmation', 'toggleIcon2')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                   placeholder="Ulangi password"
+                                   minlength="6">
+                            <button type="button" onclick="togglePassword('password_confirmation', 'toggleIcon2')" 
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <i id="toggleIcon2" class="fas fa-eye"></i>
                             </button>
                         </div>
+                        @error('password_confirmation')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Info Box -->
@@ -111,8 +158,8 @@
                             <div class="text-sm text-blue-800">
                                 <p class="font-semibold mb-1">Informasi:</p>
                                 <ul class="list-disc list-inside space-y-1">
-                                    <li>Akun yang didaftarkan akan mendapat role <strong>User</strong></li>
-                                    <li>Status akun <strong>Pending</strong> menunggu approval admin</li>
+                                    <li>Akun yang didaftarkan akan mendapat role <strong>User/Klien</strong></li>
+                                    <li>Status akun <strong>Inactive</strong> menunggu approval admin</li>
                                     <li>Setelah approved, Anda dapat login dan melakukan booking</li>
                                 </ul>
                             </div>

@@ -6,90 +6,175 @@ use App\Models\BukaJadwal;
 use App\Models\Sesi;
 use App\Models\JenisAcara;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class BukaJadwalController extends Controller
 {
-    
     public function index()
     {
-        // Mengambil semua data jadwal, termasuk relasi ke 'sesi' dan 'jenisAcara'.
-        // Diurutkan berdasarkan tanggal terbaru.
         $bukaJadwal = BukaJadwal::with(['sesi', 'jenisAcara'])
+            ->withCount('bookings')
             ->orderBy('tanggal', 'desc')
             ->get();
             
-        // Mengirim data ke view untuk ditampilkan.
         return view('transaksi.buka-jadwal.index', compact('bukaJadwal'));
     }
 
-    /**
-     * Menyimpan data jadwal baru yang diinput dari form.
-     */
     public function store(Request $request)
     {
-        // Memvalidasi data yang masuk dari request.
         $validated = $request->validate([
-            'hari' => 'required|max:20',
-            'tanggal' => 'required|date',
+            'hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
+            'tanggal' => 'required|date|after_or_equal:today',
             'sesi_id' => 'required|exists:sesi,id',
-            'jenisacara_id' => 'required|exists:jenis_acara,id'
+            'jenisacara_id' => 'required|exists:jenis_acara,id',
+            'status_jadwal' => 'required|in:available,booked'
         ], [
-            // Pesan error kustom untuk validasi.
             'hari.required' => 'Hari harus diisi',
+            'hari.in' => 'Hari tidak valid',
             'tanggal.required' => 'Tanggal harus diisi',
+            'tanggal.after_or_equal' => 'Tanggal tidak boleh kurang dari hari ini',
             'sesi_id.required' => 'Sesi harus dipilih',
-            'jenisacara_id.required' => 'Jenis acara harus dipilih'
+            'jenisacara_id.required' => 'Jenis acara harus dipilih',
+            'status_jadwal.required' => 'Status jadwal harus dipilih'
         ]);
 
-        // Membuat record baru di database menggunakan data yang sudah divalidasi.
-        BukaJadwal::create($validated);
+        // Auto-set hari dari tanggal
+        $tanggal = Carbon::parse($validated['tanggal']);
+        $hariDariTanggal = $tanggal->locale('id')->dayName;
+        
+        // Mapping hari Indonesia
+        $hariMapping = [
+            'Senin' => 'Senin',
+            'Selasa' => 'Selasa',
+            'Rabu' => 'Rabu',
+            'Kamis' => 'Kamis',
+            'Jumat' => 'Jumat',
+            'Sabtu' => 'Sabtu',
+            'Minggu' => 'Minggu'
+        ];
+        
+        $validated['hari'] = $hariMapping[$hariDariTanggal] ?? $validated['hari'];
 
-        // Mengarahkan kembali ke halaman index dengan pesan sukses.
-        return redirect()->route('buka-jadwal.index')
-            ->with('success', 'Buka jadwal berhasil ditambahkan!');
+        // Check duplicate jadwal (tanggal + sesi yang sama)
+        $exists = BukaJadwal::where('tanggal', $validated['tanggal'])
+            ->where('sesi_id', $validated['sesi_id'])
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->with('error', 'Jadwal dengan tanggal dan sesi yang sama sudah ada!')
+                ->withInput();
+        }
+
+        try {
+            BukaJadwal::create($validated);
+            return redirect()->route('admin.transaksi.buka-jadwal.index')
+                ->with('success', 'Buka jadwal berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            Log::error('Error creating buka jadwal: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menambahkan jadwal.')
+                ->withInput();
+        }
     }
 
-    /**
-     * Mengupdate data jadwal yang sudah ada.
-     */
     public function update(Request $request, BukaJadwal $bukaJadwal)
     {
-        // Validasi data yang masuk, mirip seperti fungsi store.
         $validated = $request->validate([
-            'hari' => 'required|max:20',
+            'hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'tanggal' => 'required|date',
             'sesi_id' => 'required|exists:sesi,id',
-            'jenisacara_id' => 'required|exists:jenis_acara,id'
+            'jenisacara_id' => 'required|exists:jenis_acara,id',
+            'status_jadwal' => 'required|in:available,booked'
         ], [
             'hari.required' => 'Hari harus diisi',
             'tanggal.required' => 'Tanggal harus diisi',
             'sesi_id.required' => 'Sesi harus dipilih',
-            'jenisacara_id.required' => 'Jenis acara harus dipilih'
+            'jenisacara_id.required' => 'Jenis acara harus dipilih',
+            'status_jadwal.required' => 'Status jadwal harus dipilih'
         ]);
 
-        // Mengupdate record yang ada dengan data yang sudah divalidasi.
-        $bukaJadwal->update($validated);
+        // Check: Jika sudah ada booking, status TIDAK bisa diubah ke available
+        $hasBooking = $bukaJadwal->bookings()->count() > 0;
+        
+        if ($hasBooking && $validated['status_jadwal'] === 'available') {
+            return redirect()->back()
+                ->with('error', 'Status tidak dapat diubah ke Available karena jadwal sudah memiliki booking!')
+                ->withInput();
+        }
 
-        // Mengarahkan kembali ke halaman index dengan pesan sukses.
-        return redirect()->route('buka-jadwal.index')
-            ->with('success', 'Buka jadwal berhasil diupdate!');
+        // Auto-set hari dari tanggal
+        $tanggal = Carbon::parse($validated['tanggal']);
+        $hariDariTanggal = $tanggal->locale('id')->dayName;
+        
+        $hariMapping = [
+            'Senin' => 'Senin',
+            'Selasa' => 'Selasa',
+            'Rabu' => 'Rabu',
+            'Kamis' => 'Kamis',
+            'Jumat' => 'Jumat',
+            'Sabtu' => 'Sabtu',
+            'Minggu' => 'Minggu'
+        ];
+        
+        $validated['hari'] = $hariMapping[$hariDariTanggal] ?? $validated['hari'];
+
+        // Check duplicate (exclude current record)
+        $exists = BukaJadwal::where('tanggal', $validated['tanggal'])
+            ->where('sesi_id', $validated['sesi_id'])
+            ->where('id', '!=', $bukaJadwal->id)
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->with('error', 'Jadwal dengan tanggal dan sesi yang sama sudah ada!')
+                ->withInput();
+        }
+
+        // Validasi status: Jika ada booking aktif, tidak bisa ubah ke available
+        $hasActiveBooking = $bukaJadwal->bookings()
+            ->where('status_booking', 'active')
+            ->exists();
+
+        if ($hasActiveBooking && $validated['status_jadwal'] === 'available') {
+            return redirect()->back()
+                ->with('error', 'Tidak dapat mengubah status menjadi available karena jadwal ini masih memiliki booking aktif!')
+                ->withInput();
+        }
+
+        try {
+            $bukaJadwal->update($validated);
+            return redirect()->route('admin.transaksi.buka-jadwal.index')
+                ->with('success', 'Buka jadwal berhasil diupdate!');
+        } catch (\Exception $e) {
+            Log::error('Error updating buka jadwal: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat mengupdate jadwal.')
+                ->withInput();
+        }
     }
 
-    /**
-     * Menghapus data jadwal.
-     */
     public function destroy(BukaJadwal $bukaJadwal)
     {
+        $bookingCount = $bukaJadwal->bookings()->count();
+        
+        if ($bookingCount > 0) {
+            return redirect()->route('admin.transaksi.buka-jadwal.index')
+                ->with('error', "Jadwal tidak dapat dihapus karena sudah digunakan oleh {$bookingCount} booking!");
+        }
+
         try {
-            // Mencoba untuk menghapus data.
+            $tanggal = Carbon::parse($bukaJadwal->tanggal)->format('d/m/Y');
+            $sesi = $bukaJadwal->sesi->nama ?? '-';
             $bukaJadwal->delete();
-            return redirect()->route('buka-jadwal.index')
-                ->with('success', 'Buka jadwal berhasil dihapus!');
+            
+            return redirect()->route('admin.transaksi.buka-jadwal.index')
+                ->with('success', "Jadwal {$tanggal} - {$sesi} berhasil dihapus!");
         } catch (\Exception $e) {
-            // Jika terjadi error (misalnya karena jadwal sudah dibooking),
-            // kirim pesan error.
-            return redirect()->route('buka-jadwal.index')
-                ->with('error', 'Buka jadwal tidak dapat dihapus karena sudah dibooking!');
+            Log::error('Error deleting buka jadwal: ' . $e->getMessage());
+            return redirect()->route('admin.transaksi.buka-jadwal.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus jadwal.');
         }
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pembayaran extends Model
 {
-    protected $table = 'pembayaran';
+    protected $table = 'transaksi_pembayaran';
 
     protected $fillable = [
         'tgl_pembayaran',
@@ -16,8 +16,8 @@ class Pembayaran extends Model
         'nominal'
     ];
 
-    public function booking()
+    public function bookings()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(Booking::class,'booking_id');
     }
 }

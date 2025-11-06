@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistem Manajemen Aula</title>
+    <title>Login - Sistem Booking Aula</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -15,7 +15,7 @@
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
                     <i class="fas fa-building text-white text-2xl"></i>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Sistem Manajemen Aula</h1>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Sistem Booking Aula</h1>
                 <p class="text-gray-600">Silakan login untuk melanjutkan</p>
             </div>
 

@@ -19,10 +19,10 @@ class User extends Authenticatable
         'nama',
         'email',
         'password',
+        'no_hp',
+        'alamat',
         'role_id',
         'foto',
-        'alamat',
-        'no_hp',
         'status_users'
     ];
 

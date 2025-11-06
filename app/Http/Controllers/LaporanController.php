@@ -2,80 +2,98 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Booking;
 use App\Models\Pembayaran;
-use App\Models\BukaJadwal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
-    public function index()
+    /**
+     * Laporan Pengguna - Data user dan booking
+     */
+    public function pengguna(Request $request)
     {
-        return view('laporan.index');
+        $query = User::with(['bookings.pembayaran', 'bookings.bukaJadwal'])
+            ->where('role_id', '!=', 1) // Exclude admin
+            ->withCount('bookings');
+        
+        // Filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereHas('bookings', function($q) use ($request) {
+                $q->whereDate('tgl_booking', '>=', $request->start_date);
+            });
+        }
+        
+        if ($request->filled('end_date')) {
+            $query->whereHas('bookings', function($q) use ($request) {
+                $q->whereDate('tgl_booking', '<=', $request->end_date);
+            });
+        }
+        
+        $users = $query->latest()->get();
+        
+        // Calculate stats
+        $totalUsers = $users->count();
+        $totalBookings = Booking::count();
+        $activeUsers = $users->filter(function($user) {
+            return $user->bookings_count > 0;
+        })->count();
+        
+        return view('pimpinan.laporan.pengguna', compact(
+            'users',
+            'totalUsers',
+            'totalBookings',
+            'activeUsers'
+        ));
     }
-
-    public function booking(Request $request)
+    
+    /**
+     * Laporan Keuangan - Data pembayaran
+     */
+    public function keuangan(Request $request)
     {
-        $query = Booking::with(['user', 'bukaJadwal.sesi', 'bukaJadwal.jenisAcara', 'catering']);
-
-        if ($request->filled('tanggal_mulai')) {
-            $query->where('tgl_booking', '>=', $request->tanggal_mulai);
+        $query = Pembayaran::with(['bookings.user', 'bookings.bukaJadwal']);
+        
+        // Filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereDate('tgl_pembayaran', '>=', $request->start_date);
         }
-        if ($request->filled('tanggal_akhir')) {
-            $query->where('tgl_booking', '<=', $request->tanggal_akhir);
+        
+        if ($request->filled('end_date')) {
+            $query->whereDate('tgl_pembayaran', '<=', $request->end_date);
         }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $bookings = $query->orderBy('tgl_booking', 'desc')->get();
-
-        $total = $bookings->count();
-        $aktif = $bookings->where('status', 'aktif')->count();
-        $tidak_aktif = $bookings->where('status', 'tidak aktif')->count();
-
-        return view('laporan.booking', compact('bookings', 'total', 'aktif', 'tidak_aktif'));
-    }
-
-    public function pembayaran(Request $request)
-    {
-        $query = Pembayaran::with(['booking.user', 'booking.bukaJadwal']);
-
-        if ($request->filled('tanggal_mulai')) {
-            $query->where('tgl_pembayaran', '>=', $request->tanggal_mulai);
-        }
-        if ($request->filled('tanggal_akhir')) {
-            $query->where('tgl_pembayaran', '<=', $request->tanggal_akhir);
-        }
+        
+        // Filter by jenis bayar
         if ($request->filled('jenis_bayar')) {
             $query->where('jenis_bayar', $request->jenis_bayar);
         }
-
-        $pembayaran = $query->orderBy('tgl_pembayaran', 'desc')->get();
-
-        $total = $pembayaran->count();
-        $dp = $pembayaran->where('jenis_bayar', 'DP')->count();
-        $termin = $pembayaran->whereIn('jenis_bayar', ['Termin 1', 'Termin 2', 'Termin 3'])->count();
-        $pelunasan = $pembayaran->where('jenis_bayar', 'Pelunasan')->count();
-
-        return view('laporan.pembayaran', compact('pembayaran', 'total', 'dp', 'termin', 'pelunasan'));
-    }
-
-    public function bukaJadwal(Request $request)
-    {
-        $query = BukaJadwal::with(['sesi', 'jenisAcara']);
-
-        if ($request->filled('tanggal_mulai')) {
-            $query->where('tanggal', '>=', $request->tanggal_mulai);
-        }
-        if ($request->filled('tanggal_akhir')) {
-            $query->where('tanggal', '<=', $request->tanggal_akhir);
-        }
-
-        $bukaJadwal = $query->orderBy('tanggal', 'desc')->get();
-
-        $total = $bukaJadwal->count();
-
-        return view('laporan.buka-jadwal', compact('bukaJadwal', 'total'));
+        
+        $pembayarans = $query->latest('tgl_pembayaran')->get();
+        
+        // Calculate stats
+        $totalPembayaran = $pembayarans->sum('nominal');
+        $totalDP = $pembayarans->where('jenis_bayar', 'DP')->sum('nominal');
+        $totalTermin = $pembayarans->filter(function($p) {
+            return str_contains($p->jenis_bayar, 'Termin');
+        })->sum('nominal');
+        $totalPelunasan = $pembayarans->where('jenis_bayar', 'Pelunasan')->sum('nominal');
+        
+        // Monthly revenue
+        $monthlyRevenue = $pembayarans->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->tgl_pembayaran)->format('Y-m');
+        })->map(function($group) {
+            return $group->sum('nominal');
+        });
+        
+        return view('pimpinan.laporan.keuangan', compact(
+            'pembayarans',
+            'totalPembayaran',
+            'totalDP',
+            'totalTermin',
+            'totalPelunasan',
+            'monthlyRevenue'
+        ));
     }
 }

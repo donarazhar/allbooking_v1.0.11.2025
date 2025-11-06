@@ -4,118 +4,169 @@ namespace App\Http\Controllers;
 
 use App\Models\Catering;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
-/**
- * Controller untuk mengelola semua logika terkait data master catering.
- */
 class CateringController extends Controller
 {
-    /**
-     * Menampilkan halaman utama yang berisi daftar semua data catering.
-     */
     public function index()
     {
-        $catering = Catering::orderBy('nama', 'asc')->get();
+        $catering = Catering::withCount('bookings')
+            ->orderBy('nama', 'asc')
+            ->get();
         return view('master.catering.index', compact('catering'));
     }
 
-    /**
-     * Menyimpan data catering baru, termasuk meng-handle upload file foto.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nama' => 'required|max:255',
-            'email' => 'required|email|max:255',
-            'no_hp' => 'required|max:20',
-            'alamat' => 'required',
-            'keterangan' => 'nullable|max:255',
-            'foto' => 'required',
+            'nama' => 'required|string|max:100',
+            'email' => 'required|email|unique:catering,email|max:255',
+            'no_hp' => 'required|string|min:10|max:13|regex:/^[0-9]+$/|unique:catering,no_hp',
+            'alamat' => 'required|string|max:500',
+            'password' => 'required|string|min:6',
+            'keterangan' => 'nullable|string|max:500',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ], [
             'nama.required' => 'Nama catering harus diisi',
+            'nama.max' => 'Nama maksimal 100 karakter',
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah digunakan',
             'no_hp.required' => 'No HP harus diisi',
+            'no_hp.unique' => 'No HP sudah terdaftar',
+            'no_hp.min' => 'No HP minimal 10 digit',
+            'no_hp.max' => 'No HP maksimal 13 digit',
+            'no_hp.regex' => 'No HP hanya boleh berisi angka',
             'alamat.required' => 'Alamat harus diisi',
-            'foto.image' => 'Foto harus berupa gambar',
-            'foto.max' => 'Ukuran foto maksimal 2MB',
-            'keterangan' => 'Keterangan harus diisi',
+            'alamat.max' => 'Alamat maksimal 500 karakter',
+            'password.required' => 'Password harus diisi',
+            'password.min' => 'Password minimal 6 karakter',
+            'keterangan.max' => 'Keterangan maksimal 500 karakter',
+            'foto.image' => 'File harus berupa gambar',
+            'foto.mimes' => 'Format gambar harus jpeg, png, atau jpg',
+            'foto.max' => 'Ukuran foto maksimal 2MB'
         ]);
 
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/catering'), $filename);
             $validated['foto'] = $filename;
         }
 
-        Catering::create($validated);
+        $validated['password'] = Hash::make($validated['password']);
+        $validated['nama'] = trim($validated['nama']);
+        $validated['email'] = strtolower(trim($validated['email']));
 
-        return redirect()->route('catering.index')
-            ->with('success', 'Data catering berhasil ditambahkan!');
+        try {
+            Catering::create($validated);
+            return redirect()->route('admin.master.catering.index')
+                ->with('success', 'Catering berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            Log::error('Error creating catering: ' . $e->getMessage());
+            
+            if (isset($validated['foto']) && file_exists(public_path('uploads/catering/' . $validated['foto']))) {
+                unlink(public_path('uploads/catering/' . $validated['foto']));
+            }
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menambahkan catering.')
+                ->withInput();
+        }
     }
 
-    /**
-     * Mengupdate data catering yang sudah ada, termasuk mengganti foto jika ada.
-     */
     public function update(Request $request, Catering $catering)
     {
         $validated = $request->validate([
-            'nama' => 'required|max:255',
-            'email' => 'required|email|max:255',
-            'no_hp' => 'required|max:20',
-            'alamat' => 'required',
-            'keterangan' => 'nullable|max:255',
+            'nama' => 'required|string|max:100',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('catering')->ignore($catering->id),
+            ],
+            'no_hp' => [
+                'required',
+                'string',
+                'min:10',
+                'max:13',
+                'regex:/^[0-9]+$/',
+                Rule::unique('catering')->ignore($catering->id),
+            ],
+            'alamat' => 'required|string|max:500',
+            'password' => 'nullable|string|min:6',
+            'keterangan' => 'nullable|string|max:500',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ], [
             'nama.required' => 'Nama catering harus diisi',
             'email.required' => 'Email harus diisi',
-            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah digunakan',
             'no_hp.required' => 'No HP harus diisi',
+            'no_hp.unique' => 'No HP sudah terdaftar',
+            'no_hp.regex' => 'No HP hanya boleh berisi angka',
             'alamat.required' => 'Alamat harus diisi',
-            'foto.image' => 'Foto harus berupa gambar',
-            'foto.max' => 'Ukuran foto maksimal 2MB',
-            'keterangan' => 'nullable|max:255',
-            
+            'password.min' => 'Password minimal 6 karakter',
+            'foto.image' => 'File harus berupa gambar',
+            'foto.max' => 'Ukuran foto maksimal 2MB'
         ]);
 
         if ($request->hasFile('foto')) {
-            // Hapus foto lama jika ada
             if ($catering->foto && file_exists(public_path('uploads/catering/' . $catering->foto))) {
                 unlink(public_path('uploads/catering/' . $catering->foto));
             }
             
-            // Upload foto baru
             $file = $request->file('foto');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/catering'), $filename);
             $validated['foto'] = $filename;
         }
 
-        $catering->update($validated);
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
 
-        return redirect()->route('catering.index')
-            ->with('success', 'Data catering berhasil diupdate!');
+        $validated['nama'] = trim($validated['nama']);
+        $validated['email'] = strtolower(trim($validated['email']));
+
+        try {
+            $catering->update($validated);
+            return redirect()->route('admin.master.catering.index')
+                ->with('success', 'Catering berhasil diupdate!');
+        } catch (\Exception $e) {
+            Log::error('Error updating catering: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat mengupdate catering.')
+                ->withInput();
+        }
     }
 
-    /**
-     * Menghapus data catering dari database, termasuk file fotonya.
-     */
     public function destroy(Catering $catering)
     {
+        $bookingCount = $catering->bookings()->count();
+        
+        if ($bookingCount > 0) {
+            return redirect()->route('admin.master.catering.index')
+                ->with('error', "Catering tidak dapat dihapus karena masih digunakan oleh {$bookingCount} booking!");
+        }
+
         try {
-            // Hapus file foto terkait jika ada
             if ($catering->foto && file_exists(public_path('uploads/catering/' . $catering->foto))) {
                 unlink(public_path('uploads/catering/' . $catering->foto));
             }
-            
+
+            $nama = $catering->nama;
             $catering->delete();
-            return redirect()->route('catering.index')
-                ->with('success', 'Data catering berhasil dihapus!');
+            
+            return redirect()->route('admin.master.catering.index')
+                ->with('success', "Catering '{$nama}' berhasil dihapus!");
         } catch (\Exception $e) {
-            return redirect()->route('catering.index')
-                ->with('error', 'Data catering tidak dapat dihapus karena masih digunakan!');
+            Log::error('Error deleting catering: ' . $e->getMessage());
+            return redirect()->route('admin.master.catering.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus catering.');
         }
     }
 }

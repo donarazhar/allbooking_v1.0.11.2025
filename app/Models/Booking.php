@@ -8,20 +8,21 @@ use Carbon\Carbon;
 // Model untuk data Booking.
 class Booking extends Model
 {
+    protected $table = 'transaksi_booking';
     // Kolom yang bisa diisi.
     protected $fillable = [
         'user_id',
-        'buka_jadwal_id',
-        'tanggal_booking',
+        'bukajadwal_id',
+        'tgl_booking',
         'catering_id',
-        'status_bookings',
+        'status_booking',
         'keterangan',
         'tgl_expired_booking'
     ];
 
     // Casting tipe data kolom.
     protected $casts = [
-        'tanggal_booking' => 'date',
+        'tgl_booking' => 'date',
         'tgl_expired_booking' => 'date'
     ];
 
@@ -50,13 +51,13 @@ class Booking extends Model
     // Relasi: Booking ini milik satu User.
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // Relasi: Booking ini untuk satu BukaJadwal.
     public function bukaJadwal()
     {
-        return $this->belongsTo(BukaJadwal::class);
+        return $this->belongsTo(BukaJadwal::class,'bukajadwal_id');
     }
 
     // Relasi: Booking ini bisa memiliki satu Catering.

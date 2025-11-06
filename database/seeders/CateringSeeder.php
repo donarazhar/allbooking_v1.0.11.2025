@@ -3,87 +3,74 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Catering;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class CateringSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        $catering = [
+        $caterings = [
             [
-                'nama' => 'Boga Rasa Catering',
-                'no_hp' => '081234567890',
-                'email' => 'a@catering.com',
-                'alamat' => 'Jl. Merdeka No. 45, Jakarta Pusat',
-                'keterangan' => 'Spesialis masakan Nusantara dan internasional'
+                'nama' => 'Catering Nusantara',
+                'email' => 'nusantara@catering.com',
+                'no_hp' => '021-5551234',
+                'alamat' => 'Jl. Melawai Raya No. 100, Jakarta Selatan, DKI Jakarta',
+                'password' => Hash::make('password'),
+                'foto' => null,
+                'keterangan' => 'Spesialis masakan Nusantara untuk acara pernikahan, seminar, dan konferensi. Berpengalaman lebih dari 10 tahun.',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'nama' => 'Santapan Nikmat',
-                'no_hp' => '081234567891',
-                'email' => 'b@catering.com',
-                'alamat' => 'Jl. Sudirman No. 123, Jakarta Selatan',
-                'keterangan' => 'Catering untuk acara pernikahan dan gathering'
+                'nama' => 'Boga Catering',
+                'email' => 'boga@catering.com',
+                'no_hp' => '021-5551235',
+                'alamat' => 'Jl. Senopati No. 45, Jakarta Selatan, DKI Jakarta',
+                'password' => Hash::make('password'),
+                'foto' => null,
+                'keterangan' => 'Catering premium untuk berbagai acara. Menu variatif dengan harga terjangkau.',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'nama' => 'Dapur Mama',
-                'no_hp' => '081234567892',
-                'email' => 'c@catering.com',
-                'alamat' => 'Jl. Gatot Subroto No. 78, Jakarta Barat',
-                'keterangan' => 'Home cooking dengan cita rasa istimewa'
-            ],
-            [
-                'nama' => 'Prasmanan Deluxe',
-                'no_hp' => '081234567893',
-                'email' => 'd@catering.com',
-                'alamat' => 'Jl. Thamrin No. 56, Jakarta Pusat',
-                'keterangan' => 'Prasmanan mewah untuk acara besar'
-            ],
-            [
-                'nama' => 'Cita Rasa Jaya',
-                'no_hp' => '081234567894',
-                'email' => 'e@catering.com',
-                'alamat' => 'Jl. Kebon Jeruk No. 90, Jakarta Barat',
-                'keterangan' => 'Catering halal dengan menu variatif'
-            ],
-            [
-                'nama' => 'Nasi Box Express',
-                'no_hp' => '081234567895',
-                'email' => 'f@catering.com',
-                'alamat' => 'Jl. Raya Pasar Minggu No. 34, Jakarta Selatan',
-                'keterangan' => 'Spesialis nasi box untuk meeting dan seminar'
-            ],
-            [
-                'nama' => 'Royal Catering Service',
-                'no_hp' => '081234567896',
-                'email' => 'g@catering.com',
-                'alamat' => 'Jl. HR Rasuna Said No. 100, Jakarta Selatan',
-                'keterangan' => 'Catering premium dengan service terbaik'
+                'nama' => 'Royal Catering',
+                'email' => 'royal@catering.com',
+                'no_hp' => '021-5551236',
+                'alamat' => 'Jl. Kemang Raya No. 28, Jakarta Selatan, DKI Jakarta',
+                'password' => Hash::make('password'),
+                'foto' => null,
+                'keterangan' => 'Catering mewah untuk acara eksklusif. Spesialis menu internasional dan fusion.',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'nama' => 'Sari Rasa Catering',
-                'no_hp' => '081234567897',
-                'email' => 'h@catering.com',
-                'alamat' => 'Jl. Cikini Raya No. 25, Jakarta Pusat',
-                'keterangan' => 'Menu tradisional dan modern'
+                'email' => 'sarirasa@catering.com',
+                'no_hp' => '021-5551237',
+                'alamat' => 'Jl. Panglima Polim No. 12, Jakarta Selatan, DKI Jakarta',
+                'password' => Hash::make('password'),
+                'foto' => null,
+                'keterangan' => 'Catering halal dengan menu prasmanan dan buffet. Cocok untuk acara kantor dan keluarga.',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'nama' => 'Golden Feast',
-                'no_hp' => '081234567898',
-                'email' => 'i@catering.com',
-                'alamat' => 'Jl. Pejaten Raya No. 67, Jakarta Selatan',
-                'keterangan' => 'Catering untuk event corporate'
+                'nama' => 'Dapur Mama Catering',
+                'email' => 'dapurmama@catering.com',
+                'no_hp' => '021-5551238',
+                'alamat' => 'Jl. Fatmawati No. 55, Jakarta Selatan, DKI Jakarta',
+                'password' => Hash::make('password'),
+                'foto' => null,
+                'keterangan' => 'Catering rumahan dengan cita rasa homemade. Harga ekonomis untuk berbagai acara.',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
-            [
-                'nama' => 'Sederhana Catering',
-                'no_hp' => '081234567899',
-                'email' => 'j@catering.com',
-                'alamat' => 'Jl. Tebet Timur No. 12, Jakarta Selatan',
-                'keterangan' => 'Catering ekonomis dengan rasa premium'
-            ]
         ];
 
-        foreach ($catering as $data) {
-            Catering::create($data);
-        }
+        DB::table('catering')->insert($caterings);
     }
 }

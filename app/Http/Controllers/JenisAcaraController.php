@@ -4,95 +4,117 @@ namespace App\Http\Controllers;
 
 use App\Models\JenisAcara;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
-/**
- * Controller untuk mengelola data master jenis acara.
- */
 class JenisAcaraController extends Controller
 {
-    /**
-     * Menampilkan halaman daftar jenis acara.
-     */
     public function index()
     {
-        $jenisAcara = JenisAcara::orderBy('kode', 'asc')->get();
+        $jenisAcara = JenisAcara::withCount('bukaJadwal')
+            ->orderBy('kode', 'asc')
+            ->get();
         return view('master.jenis-acara.index', compact('jenisAcara'));
     }
 
-    /**
-     * Menyimpan data jenis acara baru.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'kode' => 'required|unique:jenis_acara,kode|max:10',
-            'nama' => 'required|max:255',
-            'keterangan' => 'nullable|string',
-            'harga' => 'required|numeric|min:0',
+            'kode' => 'required|string|unique:jenis_acara,kode|max:10|alpha_dash',
+            'nama' => 'required|string|max:100',
+            'harga' => 'required|numeric|min:0|max:999999999',
+            'keterangan' => 'nullable|string|max:500',
             'status_jenis_acara' => 'required|in:active,inactive'
         ], [
             'kode.required' => 'Kode harus diisi',
             'kode.unique' => 'Kode sudah digunakan',
+            'kode.alpha_dash' => 'Kode hanya boleh huruf, angka, dash, dan underscore',
             'nama.required' => 'Nama jenis acara harus diisi',
+            'nama.max' => 'Nama maksimal 100 karakter',
             'harga.required' => 'Harga harus diisi',
-            'status_jenis_acara.required' => 'Status harus dipilih'
-        ]);
-       
-        JenisAcara::create($validated);
-
-        return redirect()->route('jenis-acara.index')
-            ->with('success', 'Data jenis acara berhasil ditambahkan!');
-    }
-
-    /**
-     * Mengupdate data jenis acara yang ada.
-     */
-    public function update(Request $request, JenisAcara $jenisAcara)
-    {
-        $validated = $request->validate([
-            'kode' => 'required|max:10|unique:jenis_acara,kode,' . $jenisAcara->id,
-            'nama' => 'required|max:255',
-            'keterangan' => 'nullable|string',
-            'harga' => 'required|numeric|min:0',
-            'status_jenis_acara' => 'required|in:active,inactive'
-        ], [
-            'kode.required' => 'Kode harus diisi',
-            'kode.unique' => 'Kode sudah digunakan',
-            'nama.required' => 'Nama jenis acara harus diisi',
-            'harga.required' => 'Harga harus diisi',
-            'status_jenis_acara.required' => 'Status harus dipilih'
+            'harga.min' => 'Harga minimal 0',
+            'harga.max' => 'Harga maksimal 999.999.999',
+            'status_jenis_acara.required' => 'Status harus dipilih',
+            'keterangan.max' => 'Keterangan maksimal 500 karakter'
         ]);
 
-        $jenisAcara->update($validated);
+        $validated['kode'] = strtoupper(trim($validated['kode']));
+        $validated['nama'] = trim($validated['nama']);
 
-        return redirect()->route('jenis-acara.index')
-            ->with('success', 'Data jenis acara berhasil diupdate!');
-    }
-
-    /**
-     * Menghapus data jenis acara.
-     */
-    public function destroy(JenisAcara $jenisAcara)
-    {
         try {
-            $jenisAcara->delete();
-            return redirect()->route('jenis-acara.index')
-                ->with('success', 'Data jenis acara berhasil dihapus!');
+            JenisAcara::create($validated);
+            return redirect()->route('admin.master.jenis-acara.index')
+                ->with('success', 'Jenis Acara berhasil ditambahkan!');
         } catch (\Exception $e) {
-            return redirect()->route('jenis-acara.index')
-                ->with('error', 'Data jenis acara tidak dapat dihapus karena masih digunakan!');
+            Log::error('Error creating jenis acara: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menambahkan jenis acara.')
+                ->withInput();
         }
     }
 
-    /**
-     * Mengubah status aktif/tidak aktif jenis acara.
-     */
+    public function update(Request $request, JenisAcara $jenisAcara)
+    {
+        $validated = $request->validate([
+            'kode' => 'required|string|max:10|alpha_dash|unique:jenis_acara,kode,' . $jenisAcara->id,
+            'nama' => 'required|string|max:100',
+            'harga' => 'required|numeric|min:0|max:999999999',
+            'keterangan' => 'nullable|string|max:500',
+            'status_jenis_acara' => 'required|in:active,inactive'
+        ], [
+            'kode.required' => 'Kode harus diisi',
+            'kode.unique' => 'Kode sudah digunakan',
+            'kode.alpha_dash' => 'Kode hanya boleh huruf, angka, dash, dan underscore',
+            'nama.required' => 'Nama jenis acara harus diisi',
+            'harga.required' => 'Harga harus diisi',
+            'harga.min' => 'Harga minimal 0',
+            'status_jenis_acara.required' => 'Status harus dipilih'
+        ]);
+
+        $validated['kode'] = strtoupper(trim($validated['kode']));
+        $validated['nama'] = trim($validated['nama']);
+
+        try {
+            $jenisAcara->update($validated);
+            return redirect()->route('admin.master.jenis-acara.index')
+                ->with('success', 'Jenis Acara berhasil diupdate!');
+        } catch (\Exception $e) {
+            Log::error('Error updating jenis acara: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat mengupdate jenis acara.')
+                ->withInput();
+        }
+    }
+
+    public function destroy(JenisAcara $jenisAcara)
+    {
+        $jadwalCount = $jenisAcara->bukaJadwal()->count();
+        
+        if ($jadwalCount > 0) {
+            return redirect()->route('admin.master.jenis-acara.index')
+                ->with('error', "Jenis Acara tidak dapat dihapus karena masih digunakan oleh {$jadwalCount} jadwal!");
+        }
+
+        try {
+            $nama = $jenisAcara->nama;
+            $jenisAcara->delete();
+            
+            return redirect()->route('admin.master.jenis-acara.index')
+                ->with('success', "Jenis Acara '{$nama}' berhasil dihapus!");
+        } catch (\Exception $e) {
+            Log::error('Error deleting jenis acara: ' . $e->getMessage());
+            return redirect()->route('admin.master.jenis-acara.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus jenis acara.');
+        }
+    }
+
     public function toggleStatus(JenisAcara $jenisAcara)
     {
         $newStatus = $jenisAcara->status_jenis_acara === 'active' ? 'inactive' : 'active';
         $jenisAcara->update(['status_jenis_acara' => $newStatus]);
 
-        return redirect()->route('jenis-acara.index')
-            ->with('success', 'Status jenis acara berhasil diubah menjadi ' . $newStatus . '!');
+        $statusText = $newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan';
+
+        return redirect()->route('admin.master.jenis-acara.index')
+            ->with('success', "Jenis Acara '{$jenisAcara->nama}' berhasil {$statusText}!");
     }
 }
