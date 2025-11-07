@@ -1,40 +1,33 @@
-Aplikasi manajemen “Booking Aula” versi v1.0.11.2025 yang dibangun oleh Donar Azhar.
+## Aplikasi manajemen “Booking Aula” versi v1.0.11.2025 yang dibangun oleh Donar Azhar. 
+bertujuan untuk kemudahan pencarian tanggal kosong, booking, pembayaran bagi klien aula serta mengelola kontrol penuh terkait laporan untuk pimpinan dan pengelola aula.
 
-## Daftar Isi
-1. Fitur Utama
-2. Teknologi yang Digunakan
-3. Persyaratan (Prerequisites)
-4. Lisensi
-5. Kontak & Penulis
+Aplikasi ini dalam proses pengembangan, jika ada saran dan kritik bisa email kami : donarazhar@gmail.coom
 
-1. Fitur Utama
-- Modul pendaftaran/otentikasi pengguna (login, register, lupa password
-- Pengelolaan entitas inti aplikasi (sesi, jenis acara, catering, buka jadwal, booking, pembayaran)
-- Proses workflow (Master Data -> Pilih Jadwal Kosong → Lakukan Booking → Pembayaran (DP dan Pelunasan)
-- Dashboard statistik real-time
-- Sistem laporan dengan filter, export (PDF/Excel)
-- Manajemen role dan permission (admin, pimpinan, user)
-- Notifikasi (email / in-app)
-- Integrasi plugin atau sistem third-party dalam pengembangan : (QRIS dan API eksternal)
+## Fitur Utama  
+- Halaman frontpage
+- Halaman login
+- Halaman Admin :
+    - Manajemen ( Role, User)
+    - Master Data ( Sesi, Jenis Acara, Rekanan Catering)
+    - Transaksi ( Buka jadwal, Booking, Pembayaran)
+    - Laporan ( Laporan Pengguna, dan Laporan Keuangan)
+- Halaman User :
+    - Silahkan daftarkan dulu akun anda, tunggu konfirmasi dari admin untuk proses approval
+    - Dashboard, Jadwal, Bayar, My Booking, Profile.
 
-2. Teknologi yang Digunakan
-- Bahasa: PHP (versi 8.1)
-- Framework: Laravel (versi 11)
-- Frontend: Blade templates
-- Basis data: MySQL
-- Tooling: Composer
+## Teknologi  
+- PHP 8.3
+- Laravel (versi 12.0), Blade templates, JavaScript 
+- Database MySQL
 
-3. Persyaratan (Prerequisites)
-- PHP 8.1
-- Composer
-- Node.js & npm/yarn
-- MySQL atau MariaDB
-- Ekstensi PHP: OpenSSL, PDO, Mbstring, Tokenizer, XML, Ctype, JSON
+## Instalasi  
+      ```
+      git clone https://github.com/donarazhar/abhapp_v1.0.11.2025.git
+      composer install
+      buat file .env
+      php artisan key:generate
+      php artisan migrate --seed
 
-4. Lisensi
-Lisensi: MIT License
-
-5. Kontak & Penulis
-Penulis: Donar Azhar IG https://www.instagram.com/donsiyos/
-Email: donarazhar@gmail.com
-GitHub profile: donarazhar
+## Developer  
+Donar Azhar  IG : https://www.instagram.com/donsiyos/
+Email: donarazhar@gmail.com 
