@@ -2,49 +2,37 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Faker\Factory as Faker;
 
 class UserSeeder extends Seeder
 {
-    public function run(): void
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
     {
-        // Get role ID for 'user' (bukan admin)
-        $userRole = Role::where('nama', 'user')->first();
-        
-        if (!$userRole) {
-            $this->command->error('Role "user" tidak ditemukan! Pastikan RoleSeeder sudah dijalankan.');
-            return;
+        // Inisialisasi Faker untuk membuat data palsu
+        $faker = Faker::create('id_ID');
+
+        // Loop untuk membuat 100 data pengguna baru dengan peran 'User'
+        for ($i = 0; $i < 100; $i++) {
+            User::create([
+                'nama' => $faker->name,
+                'email' => $faker->unique()->safeEmail,
+                'password' => Hash::make('password'), // Password default untuk semua user baru
+                'role_id' => 3, // ID untuk peran 'User'
+                'status_users' => 'active',
+                'alamat' => $faker->address,
+                'no_hp' => $faker->phoneNumber,
+                'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
+                'tgl_lahir' => $faker->date(),
+            ]);
         }
-
-        $users = [
-            [
-                'nama' => 'Budi Santoso',
-                'email' => 'budi.santoso@email.com',
-                'password' => Hash::make('password'),
-                'no_hp' => '081234567001',
-                'alamat' => 'Jl. Mawar No. 10, Jakarta Timur',
-                'role_id' => $userRole->id,
-                'status_users' => 'active'
-            ],
-            [
-                'nama' => 'Siti Nurhaliza',
-                'email' => 'siti.nurhaliza@email.com',
-                'password' => Hash::make('password'),
-                'no_hp' => '081234567002',
-                'alamat' => 'Jl. Melati No. 15, Jakarta Barat',
-                'role_id' => $userRole->id,
-               'status_users' => 'active'
-            ],
-            
-        ];
-
-        foreach ($users as $data) {
-            User::create($data);
-        }
-
-        $this->command->info('UserSeeder berhasil! 2 user created dengan password: password');
     }
 }

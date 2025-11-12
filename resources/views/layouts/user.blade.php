@@ -104,7 +104,7 @@
                     <a href="{{ route('user.my-bookings') }}" 
                        class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('user.my-bookings') ? 'bg-blue-50 text-primary' : 'text-gray-700' }}">
                         <i class="fas fa-list mr-2"></i>
-                        Booking Saya
+                        My Booking
                     </a>
                     <a href="{{ route('user.profile') }}" 
                        class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('user.profile') ? 'bg-blue-50 text-primary' : 'text-gray-700' }}">

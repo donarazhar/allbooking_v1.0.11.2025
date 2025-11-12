@@ -148,6 +148,12 @@ Route::middleware('auth')->group(function () {
                 Route::post('/pembayaran/{pembayaran}/verify', [PembayaranController::class, 'verify'])->name('pembayaran.verify');
                 Route::post('/pembayaran/{pembayaran}/reject', [PembayaranController::class, 'reject'])->name('pembayaran.reject');
             });
+
+            // Laporan Admin
+            Route::prefix('laporan')->name('laporan.')->group(function () {
+                Route::get('/pengguna', [LaporanController::class, 'penggunaAdmin'])->name('pengguna');
+                Route::get('/keuangan', [LaporanController::class, 'keuanganAdmin'])->name('keuangan');
+            });
         });
 
     /*
@@ -165,29 +171,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'pimpinanDashboard'])
                 ->name('dashboard');
 
-            // Laporan
+            // Laporan Pimpinan
             Route::prefix('laporan')->name('laporan.')->group(function () {
-                Route::get('/pengguna', [LaporanController::class, 'pengguna'])
-                    ->name('pengguna');
-                Route::get('/keuangan', [LaporanController::class, 'keuangan'])
-                    ->name('keuangan');
+                Route::get('/pengguna', [LaporanController::class, 'penggunaPimpinan'])->name('pengguna');
+                Route::get('/keuangan', [LaporanController::class, 'keuanganPimpinan'])->name('keuangan');
             });
-        });
-
-    /*
-    |----------------------------------------------------------------------
-    | SHARED ROUTES (Admin & Pimpinan)
-    |----------------------------------------------------------------------
-    | Untuk routes yang bisa diakses Admin dan Pimpinan
-    */
-    Route::middleware('checkrole:Admin,Pimpinan')
-        ->prefix('laporan')
-        ->name('laporan.')
-        ->group(function () {
-            Route::get('/pengguna', [LaporanController::class, 'pengguna'])
-                ->name('pengguna');
-            Route::get('/keuangan', [LaporanController::class, 'keuangan'])
-                ->name('keuangan');
         });
 });
 

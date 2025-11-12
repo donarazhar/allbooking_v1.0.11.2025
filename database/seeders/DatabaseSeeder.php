@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
         // Jalankan seeder dalam urutan yang benar
         // Roles harus pertama karena users membutuhkan role_id
         $this->call([
-            RoleSeeder::class,      // 1. Roles (3 records)
-            SesiSeeder::class,      // 2. Sesi (4 records)
-            JenisAcaraSeeder::class, // 3. Jenis Acara (5 records)
-            CateringSeeder::class,  // 4. Catering (5 records)
-            UserSeeder::class,      // 5. Users (5 records: 1 Admin, 1 Pimpinan, 3 Klien)
+            RoleSeeder::class,      
+            SesiSeeder::class,      
+            JenisAcaraSeeder::class, 
+            CateringSeeder::class,  
+            UserSeeder::class,   
+            BukaJadwalSeeder::class,
+            BookingSeeder::class,
+
         ]);
     }
 }

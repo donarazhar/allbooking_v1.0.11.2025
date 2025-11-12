@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Booking;
 use App\Models\BukaJadwal;
-use App\Models\User;
+use App\Models\JenisAcara;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserDashboardController extends Controller
 {
@@ -38,12 +39,30 @@ class UserDashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // ✅ NEW: Get jenis acara yang memiliki jadwal tersedia
+        $jenisAcaraList = JenisAcara::whereHas('bukaJadwal', function ($query) {
+            $query->whereDate('tanggal', '>=', now())
+                ->where('status_jadwal', 'available')
+                ->whereDoesntHave('bookings', function ($q) {
+                    $q->where('status_booking', 'active');
+                });
+        })
+            ->withCount(['bukaJadwal' => function ($query) {
+                $query->whereDate('tanggal', '>=', now())
+                    ->where('status_jadwal', 'available')
+                    ->whereDoesntHave('bookings', function ($q) {
+                        $q->where('status_booking', 'active');
+                    });
+            }])
+            ->get();
+
         return view('user.dashboard', compact(
             'user',
             'totalBooking',
             'pendingBooking',
             'approvedBooking',
-            'recentBookings'
+            'recentBookings',
+            'jenisAcaraList' // ✅ NEW
         ));
     }
 
@@ -57,11 +76,29 @@ class UserDashboardController extends Controller
     {
         $user = Auth::user();
 
+        // Log request data
+        \Log::info('Update Profile Request', [
+            'user_id' => $user->id,
+            'request_data' => $request->except(['foto', 'password'])
+        ]);
+
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'no_hp' => 'nullable|string|max:20',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'tgl_lahir' => 'nullable|date',
+            'nik' => 'nullable|string|size:16|unique:users,nik,' . $user->id,
             'alamat' => 'nullable|string|max:500',
+            'provinsi_id' => 'nullable|string',
+            'provinsi_nama' => 'nullable|string',
+            'kabupaten_id' => 'nullable|string',
+            'kabupaten_nama' => 'nullable|string',
+            'kecamatan_id' => 'nullable|string',
+            'kecamatan_nama' => 'nullable|string',
+            'kelurahan_id' => 'nullable|string',
+            'kelurahan_nama' => 'nullable|string',
+            'kode_pos' => 'nullable|string|max:5',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ], [
             'nama.required' => 'Nama harus diisi',
@@ -70,28 +107,57 @@ class UserDashboardController extends Controller
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah digunakan',
             'no_hp.max' => 'No HP maksimal 20 karakter',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
+            'tgl_lahir.date' => 'Format tanggal lahir tidak valid',
+            'nik.size' => 'NIK harus 16 digit',
+            'nik.unique' => 'NIK sudah terdaftar',
             'alamat.max' => 'Alamat maksimal 500 karakter',
+            'kode_pos.max' => 'Kode pos maksimal 5 digit',
             'foto.image' => 'File harus berupa gambar',
             'foto.mimes' => 'Format foto harus jpeg, png, atau jpg',
             'foto.max' => 'Ukuran foto maksimal 2MB'
         ]);
 
+        \Log::info('Validation passed', ['validated_data' => $validated]);
+
         DB::beginTransaction();
         try {
+            // Handle file upload
             if ($request->hasFile('foto')) {
+                \Log::info('Processing file upload');
+
                 // Delete old photo if exists
                 if ($user->foto && file_exists(public_path('uploads/profile/' . $user->foto))) {
                     unlink(public_path('uploads/profile/' . $user->foto));
+                    \Log::info('Old photo deleted', ['old_foto' => $user->foto]);
+                }
+
+                // Create directory if not exists
+                $uploadPath = public_path('uploads/profile');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                    \Log::info('Upload directory created');
                 }
 
                 // Upload new photo
                 $file = $request->file('foto');
                 $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/profile'), $filename);
+                $file->move($uploadPath, $filename);
                 $validated['foto'] = $filename;
+
+                \Log::info('File uploaded successfully', ['filename' => $filename]);
             }
 
+            // Log before update
+            \Log::info('Attempting to update user', [
+                'user_id' => $user->id,
+                'data' => $validated
+            ]);
+
+            // Update user
             $user->update($validated);
+
+            \Log::info('User updated successfully', ['user_id' => $user->id]);
 
             DB::commit();
 
@@ -100,12 +166,28 @@ class UserDashboardController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            // DETAILED ERROR LOGGING
+            \Log::error('Error updating profile', [
+                'error_message' => $e->getMessage(),
+                'error_line' => $e->getLine(),
+                'error_file' => $e->getFile(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $user->id,
+                'validated_data' => $validated ?? []
+            ]);
+
             // Cleanup uploaded file if error
             if (isset($validated['foto']) && file_exists(public_path('uploads/profile/' . $validated['foto']))) {
                 unlink(public_path('uploads/profile/' . $validated['foto']));
+                \Log::info('Cleanup: Uploaded file deleted');
             }
 
-            Log::error('Error updating profile: ' . $e->getMessage());
+            // Return detailed error in debug mode
+            if (config('app.debug')) {
+                return back()
+                    ->with('error', 'Error: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')')
+                    ->withInput();
+            }
 
             return back()
                 ->with('error', 'Terjadi kesalahan saat mengupdate profile.')

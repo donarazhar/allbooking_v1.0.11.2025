@@ -99,7 +99,7 @@
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     <div class="flex items-center gap-2">
                                         @if($item->foto)
-                                            <img src="{{ asset('uploads/users/' . $item->foto) }}" 
+                                            <img src="{{ asset('uploads/profile/' . $item->foto) }}" 
                                                  class="w-8 h-8 rounded-full object-cover"
                                                  alt="{{ $item->nama }}">
                                         @else

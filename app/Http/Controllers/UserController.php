@@ -59,7 +59,7 @@ class UserController extends Controller
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/users'), $filename);
+            $file->move(public_path('uploads/profile'), $filename);
             $validated['foto'] = $filename;
         }
 
@@ -78,8 +78,8 @@ class UserController extends Controller
             Log::error('Error creating user: ' . $e->getMessage());
             
             // Delete uploaded foto if exists
-            if (isset($validated['foto']) && file_exists(public_path('uploads/users/' . $validated['foto']))) {
-                unlink(public_path('uploads/users/' . $validated['foto']));
+            if (isset($validated['foto']) && file_exists(public_path('uploads/profile/' . $validated['foto']))) {
+                unlink(public_path('uploads/profile/' . $validated['foto']));
             }
             
             return redirect()->back()
@@ -153,13 +153,13 @@ class UserController extends Controller
         // Handle foto upload
         if ($request->hasFile('foto')) {
             // Delete old foto
-            if ($user->foto && file_exists(public_path('uploads/users/' . $user->foto))) {
-                unlink(public_path('uploads/users/' . $user->foto));
+            if ($user->foto && file_exists(public_path('uploads/profile/' . $user->foto))) {
+                unlink(public_path('uploads/profile/' . $user->foto));
             }
             
             $file = $request->file('foto');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/users'), $filename);
+            $file->move(public_path('uploads/profile'), $filename);
             $validated['foto'] = $filename;
         }
 
@@ -203,8 +203,8 @@ class UserController extends Controller
 
         try {
             // Delete foto if exists
-            if ($user->foto && file_exists(public_path('uploads/users/' . $user->foto))) {
-                unlink(public_path('uploads/users/' . $user->foto));
+            if ($user->foto && file_exists(public_path('uploads/profile/' . $user->foto))) {
+                unlink(public_path('uploads/profile/' . $user->foto));
             }
             
             $userName = $user->nama;

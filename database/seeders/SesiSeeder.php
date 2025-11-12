@@ -14,7 +14,7 @@ class SesiSeeder extends Seeder
     {
         $sesi = [
             [
-                'kode' => 'S1',
+                'kode' => 'SP',
                 'nama' => 'Sesi Pagi',
                 'jam_mulai' => '08:00:00',
                 'jam_selesai' => '12:00:00',
@@ -23,7 +23,7 @@ class SesiSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'kode' => 'S2',
+                'kode' => 'SM',
                 'nama' => 'Sesi Malam',
                 'jam_mulai' => '15:00:00',
                 'jam_selesai' => '21:00:00',
@@ -32,8 +32,8 @@ class SesiSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'kode' => 'S3',
-                'nama' => 'Sesi Seminar',
+                'kode' => 'FD',
+                'nama' => 'Full Days',
                 'jam_mulai' => '07:00:00',
                 'jam_selesai' => '13:00:00',
                 'keterangan' => 'Sesi booking untuk acara seminar',

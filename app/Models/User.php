@@ -5,46 +5,56 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-/**
- * Model untuk data pengguna (user) di tabel `users`.
- */
 class User extends Authenticatable
 {
     use Notifiable;
 
-    /**
-     * Kolom yang boleh diisi massal.
-     */
+    // ✅ MAKE SURE THIS IS CORRECT
+    protected $table = 'users'; // Should be 'users' not 'transaksi_users' or anything else
+
     protected $fillable = [
         'nama',
         'email',
         'password',
         'no_hp',
         'alamat',
-        'role_id',
+        'jenis_kelamin',
+        'tgl_lahir',
+        'nik',
+        'provinsi_id',
+        'provinsi_nama',
+        'kabupaten_id',
+        'kabupaten_nama',
+        'kecamatan_id',
+        'kecamatan_nama',
+        'kelurahan_id',
+        'kelurahan_nama',
+        'kode_pos',
         'foto',
-        'status_users'
+        'role_id',
+        'status_users',
     ];
 
-    /**
-     * Kolom yang disembunyikan (cth: password).
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Relasi ke Role (satu user punya satu role).
-     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'tgl_lahir' => 'date',
+    ];
+
+    // ✅ REMOVE THIS IF EXISTS (causes usersupdated_at issue)
+    // const UPDATED_AT = 'usersupdated_at'; // ← DELETE THIS LINE!
+    // const CREATED_AT = 'userscreated_at'; // ← DELETE THIS LINE!
+
+    // Relations
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class,'role_id');
     }
 
-    /**
-     * Relasi ke Booking (satu user punya banyak booking).
-     */
     public function bookings()
     {
         return $this->hasMany(Booking::class);

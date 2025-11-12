@@ -61,14 +61,14 @@
                     </div>
 
                     {{-- Laporan Pengguna --}}
-                    <a href="{{ route('laporan.pengguna') }}" 
+                    <a href="{{ route('pimpinan.laporan.pengguna') }}" 
                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('laporan.pengguna') ? 'active' : '' }}">
                         <i class="fas fa-users w-5"></i>
                         <span class="font-medium">Laporan Pengguna</span>
                     </a>
 
                     {{-- Laporan Keuangan --}}
-                    <a href="{{ route('laporan.keuangan') }}" 
+                    <a href="{{ route('pimpinan.laporan.keuangan') }}" 
                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('laporan.keuangan') ? 'active' : '' }}">
                         <i class="fas fa-money-bill-wave w-5"></i>
                         <span class="font-medium">Laporan Keuangan</span>

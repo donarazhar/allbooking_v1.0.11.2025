@@ -31,6 +31,15 @@ class JenisAcaraSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'kode' => 'PNG',
+                'nama' => 'Pengajian',
+                'keterangan' => 'Acara pengajian dan tasyakuran',
+                'harga' => 5000000.00,
+                'status_jenis_acara' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
            
         ];
 
