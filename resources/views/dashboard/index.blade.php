@@ -90,8 +90,8 @@
                         <h4 class="text-2xl font-bold text-gray-900 mt-2">{{ number_format($stats['active_bookings']) }}
                         </h4>
                         <div class="flex items-center mt-2 text-xs">
-                            <span class="text-yellow-600 font-medium">
-                                <i class="fas fa-clock"></i> {{ $stats['pending_bookings'] }} pending
+                            <span class="text-red-600 font-medium">
+                                <i class="fas fa-clock"></i> {{ $stats['inactive_bookings'] }} inactive
                             </span>
                         </div>
                     </div>
@@ -152,10 +152,10 @@
                             @endif
 
                             @if ($pendingActions['no_dp'] > 0)
-                                <a href="{{ route('admin.transaksi.booking.index', ['dp' => 'belum_bayar']) }}"
+                                <a href="{{ route('admin.transaksi.booking.index', ['dp' => 'sudah_dp']) }}"
                                     class="flex items-center justify-between bg-white p-3 rounded-lg hover:bg-yellow-100 transition-colors">
                                     <span class="text-gray-700">
-                                        <i class="fas fa-money-bill-wave text-red-600 mr-2"></i>Belum Bayar DP
+                                        <i class="fas fa-money-bill-wave text-red-600 mr-2"></i>Sudah Bayar DP
                                     </span>
                                     <span class="font-bold text-red-700">{{ $pendingActions['no_dp'] }}</span>
                                 </a>
@@ -191,13 +191,6 @@
                             Active
                         </span>
                         <span class="font-semibold">{{ $bookingsByStatus['active'] }}</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="flex items-center">
-                            <span class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
-                            Pending
-                        </span>
-                        <span class="font-semibold">{{ $bookingsByStatus['pending'] }}</span>
                     </div>
                     <div class="flex items-center justify-between text-sm">
                         <span class="flex items-center">
@@ -513,10 +506,10 @@
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Active', 'Pending', 'Inactive'],
+                labels: ['Active', 'Inactive'],
                 datasets: [{
                     data: statusData,
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    backgroundColor: ['#10b981', '#ef4444'],
                     borderWidth: 0,
                     hoverOffset: 10
                 }]

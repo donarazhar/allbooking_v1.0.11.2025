@@ -37,7 +37,6 @@ class DashboardController extends Controller
             ])->count(),
 
             'active_bookings' => Booking::where('status_booking', 'active')->count(),
-            'pending_bookings' => Booking::where('status_booking', 'pending')->count(),
             'inactive_bookings' => Booking::where('status_booking', 'inactive')->count(),
 
             'total_schedules' => BukaJadwal::count(),
@@ -80,7 +79,6 @@ class DashboardController extends Controller
 
         // Booking by Status
         $bookingsByStatus = [
-            'pending' => $stats['pending_bookings'],
             'active' => $stats['active_bookings'],
             'inactive' => $stats['inactive_bookings'],
         ];

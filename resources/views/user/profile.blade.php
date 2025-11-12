@@ -49,7 +49,7 @@
             </div>
         @endif
 
-        {{-- PAGE HEADER --}}
+       {{-- PAGE HEADER --}}
         <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl shadow-lg p-8 text-white">
             <div class="flex items-center justify-between">
                 <div>
@@ -62,41 +62,87 @@
             </div>
         </div>
 
-        {{-- PROFILE FORM --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- LEFT: Photo --}}
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="font-semibold text-gray-900 mb-4">Foto Profile</h3>
-                    <div class="flex flex-col items-center">
-                        @if ($user->foto)
-                            <img src="{{ asset('uploads/profile/' . $user->foto) }}" alt="Profile"
-                                class="w-32 h-32 rounded-full object-cover border-4 border-blue-100 mb-4">
-                        @else
-                            <div class="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                                <span
-                                    class="text-blue-600 font-bold text-4xl">{{ strtoupper(substr($user->nama, 0, 2)) }}</span>
+        {{-- Main Form with Photo Card --}}
+        <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {{-- LEFT: Photo Upload Card (IMPROVED) --}}
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-camera text-primary mr-2"></i>
+                            Foto Profile
+                        </h3>
+
+                        {{-- Photo Preview Card --}}
+                        <div class="relative group">
+                            {{-- Current/Preview Photo --}}
+                            <div class="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-gray-200 bg-gray-100 relative">
+                                @if($user->foto)
+                                    <img src="{{ asset('uploads/profile/' . $user->foto) }}" 
+                                         alt="Profile Photo" 
+                                         id="photoPreview"
+                                         class="w-full h-full object-cover">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center bg-primary bg-opacity-10" id="photoPlaceholder">
+                                        <span class="text-primary font-bold text-5xl">{{ strtoupper(substr($user->nama, 0, 2)) }}</span>
+                                    </div>
+                                    <img src="" alt="Preview" id="photoPreview" class="w-full h-full object-cover hidden">
+                                @endif
+
+                                {{-- Hover Overlay --}}
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-300 flex items-center justify-center cursor-pointer"
+                                     onclick="document.getElementById('foto').click()">
+                                    <div class="text-white opacity-0 group-hover:opacity-100 transition-all duration-300 text-center">
+                                        <i class="fas fa-camera text-3xl mb-2"></i>
+                                        <p class="text-sm font-medium">Klik untuk ubah</p>
+                                    </div>
+                                </div>
                             </div>
-                        @endif
-                        <p class="text-sm text-gray-600 text-center">
-                            Upload foto profile Anda<br>
-                            <span class="text-xs text-gray-500">Max: 2MB (JPG, PNG)</span>
-                        </p>
+
+                            {{-- Hidden File Input --}}
+                            <input type="file" 
+                                   id="foto" 
+                                   name="foto" 
+                                   accept="image/jpeg,image/png,image/jpg"
+                                   class="hidden"
+                                   onchange="previewPhoto(event)">
+
+                            {{-- Upload Button Below Photo --}}
+                            <button type="button" 
+                                    onclick="document.getElementById('foto').click()"
+                                    class="mt-4 w-full px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2">
+                                <i class="fas fa-upload"></i>
+                                Upload Foto Baru
+                            </button>
+                        </div>
+
+                        {{-- Photo Info --}}
+                        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <p class="text-xs text-gray-600 mb-1">
+                                <i class="fas fa-info-circle text-primary mr-1"></i>
+                                <strong>Format:</strong> JPG, JPEG, PNG
+                            </p>
+                            <p class="text-xs text-gray-600 mb-1">
+                                <i class="fas fa-weight text-primary mr-1"></i>
+                                <strong>Ukuran Max:</strong> 2 MB
+                            </p>
+                            <p class="text-xs text-gray-600">
+                                <i class="fas fa-square text-primary mr-1"></i>
+                                <strong>Rekomendasi:</strong> 500x500 px
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- RIGHT: Form --}}
-            <div class="lg:col-span-2">
-                <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data"
-                    class="space-y-6">
-                    @csrf
-                    @method('PUT')
-
+                {{-- RIGHT: Form Fields --}}
+                <div class="lg:col-span-2 space-y-6">
                     {{-- DATA PRIBADI --}}
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-user text-blue-600 mr-2"></i>Data Pribadi
+                            <i class="fas fa-user text-primary mr-2"></i>Data Pribadi
                         </h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,7 +151,7 @@
                                     Nama Lengkap <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" name="nama" value="{{ old('nama', $user->nama) }}" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                             </div>
 
                             <div>
@@ -113,28 +159,28 @@
                                     Email <span class="text-red-500">*</span>
                                 </label>
                                 <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">No HP / WhatsApp</label>
                                 <input type="text" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}"
                                     placeholder="08xxxxxxxxxx"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">NIK / KTP</label>
                                 <input type="text" name="nik" value="{{ old('nik', $user->nik) }}"
                                     placeholder="16 digit NIK" maxlength="16"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                                 <p class="text-xs text-gray-500 mt-1">Masukkan 16 digit NIK sesuai KTP</p>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin</label>
                                 <select name="jenis_kelamin"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                                     <option value="">Pilih Jenis Kelamin</option>
                                     <option value="Laki-laki"
                                         {{ old('jenis_kelamin', $user->jenis_kelamin) == 'Laki-laki' ? 'selected' : '' }}>
@@ -149,13 +195,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Lahir</label>
                                 <input type="date" name="tgl_lahir"
                                     value="{{ old('tgl_lahir', $user->tgl_lahir ? $user->tgl_lahir->format('Y-m-d') : '') }}"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Foto Profile</label>
-                                <input type="file" name="foto" accept="image/jpeg,image/png,image/jpg"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                             </div>
                         </div>
                     </div>
@@ -163,20 +203,20 @@
                     {{-- ALAMAT LENGKAP --}}
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Alamat Lengkap
+                            <i class="fas fa-map-marker-alt text-primary mr-2"></i>Alamat Lengkap
                         </h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Jalan</label>
                                 <textarea name="alamat" rows="2" placeholder="Nama jalan, nomor rumah, RT/RW"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">{{ old('alamat', $user->alamat) }}</textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">{{ old('alamat', $user->alamat) }}</textarea>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Provinsi</label>
                                 <select name="provinsi_id" id="provinsi"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                                     <option value="">Pilih Provinsi</option>
                                 </select>
                                 <input type="hidden" name="provinsi_nama" id="provinsi_nama"
@@ -186,7 +226,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Kota/Kabupaten</label>
                                 <select name="kabupaten_id" id="kabupaten"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                     disabled>
                                     <option value="">Pilih Kota/Kabupaten</option>
                                 </select>
@@ -197,7 +237,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Kecamatan</label>
                                 <select name="kecamatan_id" id="kecamatan"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                     disabled>
                                     <option value="">Pilih Kecamatan</option>
                                 </select>
@@ -208,7 +248,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Kelurahan/Desa</label>
                                 <select name="kelurahan_id" id="kelurahan"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                     disabled>
                                     <option value="">Pilih Kelurahan/Desa</option>
                                 </select>
@@ -220,7 +260,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Kode Pos</label>
                                 <input type="text" name="kode_pos" value="{{ old('kode_pos', $user->kode_pos) }}"
                                     placeholder="12345" maxlength="5"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                             </div>
                         </div>
                     </div>
@@ -228,21 +268,21 @@
                     {{-- SUBMIT BUTTON --}}
                     <div class="flex items-center justify-end gap-3">
                         <a href="{{ route('user.dashboard') }}"
-                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                             <i class="fas fa-times mr-2"></i>Batal
                         </a>
-                        <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                        <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
                             <i class="fas fa-save mr-2"></i>Simpan Profile
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
 
         {{-- CHANGE PASSWORD --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-lock text-blue-600 mr-2"></i>Ubah Password
+                <i class="fas fa-lock text-primary mr-2"></i>Ubah Password
             </h3>
             <form action="{{ route('user.profile.password') }}" method="POST"
                 class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -253,25 +293,25 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password Lama <span
                             class="text-red-500">*</span></label>
                     <input type="password" name="password_lama" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password Baru <span
                             class="text-red-500">*</span></label>
                     <input type="password" name="password_baru" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Konfirmasi Password <span
                             class="text-red-500">*</span></label>
                     <input type="password" name="password_baru_confirmation" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                 </div>
 
                 <div class="md:col-span-3">
-                    <button type="submit" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                    <button type="submit" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                         <i class="fas fa-key mr-2"></i>Ubah Password
                     </button>
                 </div>
@@ -280,6 +320,44 @@
     </div>
 
     <script>
+        // Photo Preview
+        function previewPhoto(event) {
+            const file = event.target.files[0];
+            
+            if (file) {
+                // Validate file size (2MB)
+                if (file.size > 2048000) {
+                    alert('Ukuran file terlalu besar! Maksimal 2MB');
+                    event.target.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Format file tidak valid! Gunakan JPG, JPEG, atau PNG');
+                    event.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photoPreview');
+                    const placeholder = document.getElementById('photoPlaceholder');
+                    
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    
+                    if (placeholder) {
+                        placeholder.classList.add('hidden');
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
         // API Wilayah Indonesia
         const API_URL = 'https://www.emsifa.com/api-wilayah-indonesia/api';
 

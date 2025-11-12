@@ -194,6 +194,7 @@ class UserDashboardController extends Controller
                 ->withInput();
         }
     }
+    
 
     public function updatePassword(Request $request)
     {
