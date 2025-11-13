@@ -2,15 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use Notifiable;
-
-    // ✅ MAKE SURE THIS IS CORRECT
-    protected $table = 'users'; // Should be 'users' not 'transaksi_users' or anything else
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'nama',
@@ -32,6 +30,7 @@ class User extends Authenticatable
         'kode_pos',
         'foto',
         'role_id',
+        'cabang_id',
         'status_users',
     ];
 
@@ -42,21 +41,41 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed',
         'tgl_lahir' => 'date',
+        'jenis_kelamin' => 'string',
+        'status_users' => 'string',
     ];
 
-    // ✅ REMOVE THIS IF EXISTS (causes usersupdated_at issue)
-    // const UPDATED_AT = 'usersupdated_at'; // ← DELETE THIS LINE!
-    // const CREATED_AT = 'userscreated_at'; // ← DELETE THIS LINE!
-
-    // Relations
+    // Relationships
     public function role()
     {
-        return $this->belongsTo(Role::class,'role_id');
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
-    public function bookings()
+    public function cabang()
     {
-        return $this->hasMany(Booking::class);
+        return $this->belongsTo(Cabang::class, 'cabang_id');
+    }
+
+    public function transaksiBooking()
+    {
+        return $this->hasMany(TransaksiBooking::class, 'user_id');
+    }
+
+    // Helper Methods
+    public function isSuperAdmin()
+    {
+        return $this->role->kode === 'SUPERADMIN';
+    }
+
+    public function isAdmin()
+    {
+        return $this->role->kode === 'ADMIN';
+    }
+
+    public function isPimpinan()
+    {
+        return $this->role->kode === 'PIMPINAN';
     }
 }

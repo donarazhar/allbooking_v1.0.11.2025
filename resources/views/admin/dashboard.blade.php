@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
-@section('title', 'Dashboard - Sistem Manajemen Aula')
+@section('title', 'Dashboard - Sistem Booking Aula YPI Al Azhar')
 @section('page-title', 'Dashboard')
 
 @section('content')
@@ -9,7 +9,13 @@
         <div class="bg-gradient-to-r from-primary to-blue-700 rounded-xl shadow-lg p-6 text-white">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h3 class="text-2xl font-bold mb-2">Dashboard Admin</h3>
+                    <h3 class="text-2xl font-bold mb-2">
+                        @if ($isSuperAdmin)
+                            Dashboard Super Admin
+                        @else
+                            Dashboard Admin - {{ $cabangInfo->nama ?? 'Admin' }}
+                        @endif
+                    </h3>
                     <p class="text-blue-100">Selamat datang, {{ auth()->user()->nama }}! Berikut ringkasan sistem Anda.</p>
                 </div>
                 <div class="flex items-center gap-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3">
@@ -82,36 +88,43 @@
                 </div>
             </div>
 
-            {{-- Active Bookings --}}
+            {{-- Total Revenue --}}
             <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 hover:shadow-md transition-all group">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Booking Aktif</p>
-                        <h4 class="text-2xl font-bold text-gray-900 mt-2">{{ number_format($stats['active_bookings']) }}
-                        </h4>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Pendapatan</p>
+                        <h4 class="text-2xl font-bold text-gray-900 mt-2">Rp
+                            {{ number_format($stats['total_revenue'], 0, ',', '.') }}</h4>
                         <div class="flex items-center mt-2 text-xs">
-                            <span class="text-red-600 font-medium">
-                                <i class="fas fa-clock"></i> {{ $stats['inactive_bookings'] }} inactive
-                            </span>
+                            @if ($stats['revenue_growth'] >= 0)
+                                <span class="text-green-600 font-medium">
+                                    <i class="fas fa-arrow-up"></i> {{ $stats['revenue_growth'] }}%
+                                </span>
+                            @else
+                                <span class="text-red-600 font-medium">
+                                    <i class="fas fa-arrow-down"></i> {{ abs($stats['revenue_growth']) }}%
+                                </span>
+                            @endif
+                            <span class="text-gray-500 ml-1">bulan ini</span>
                         </div>
                     </div>
                     <div
                         class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        <i class="fas fa-money-bill-wave text-green-600 text-xl"></i>
                     </div>
                 </div>
             </div>
 
-            {{-- Total Schedules --}}
+            {{-- Available Schedules --}}
             <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 hover:shadow-md transition-all group">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Jadwal Tersedia</p>
-                        <h4 class="text-2xl font-bold text-gray-900 mt-2">{{ number_format($stats['total_schedules']) }}
-                        </h4>
+                        <h4 class="text-2xl font-bold text-gray-900 mt-2">
+                            {{ number_format($stats['available_schedules']) }}</h4>
                         <div class="flex items-center mt-2 text-xs">
                             <span class="text-gray-600 font-medium">
-                                <i class="fas fa-calendar"></i> {{ $stats['schedules_this_month'] }} bulan ini
+                                <i class="fas fa-calendar"></i> {{ $stats['booked_schedules'] }} terbooked
                             </span>
                         </div>
                     </div>
@@ -124,15 +137,29 @@
         </div>
 
         {{-- Pending Actions Alert --}}
-        @if ($pendingActions['new_bookings'] > 0 || $pendingActions['expired_soon'] > 0 || $pendingActions['no_dp'] > 0)
+        @if (
+            $pendingActions['new_users'] > 0 ||
+                $pendingActions['new_bookings'] > 0 ||
+                $pendingActions['expired_soon'] > 0 ||
+                $pendingActions['unpaid_bookings'] > 0)
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
                 <div class="flex items-start">
                     <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5 mr-3"></i>
                     <div class="flex-1">
                         <h4 class="text-sm font-semibold text-yellow-900 mb-2">Perlu Perhatian</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                            @if ($pendingActions['new_users'] > 0)
+                                <a href="{{ route('admin.users.index') }}?status=inactive"
+                                    class="flex items-center justify-between bg-white p-3 rounded-lg hover:bg-yellow-100 transition-colors">
+                                    <span class="text-gray-700">
+                                        <i class="fas fa-user-plus text-blue-600 mr-2"></i>User Baru
+                                    </span>
+                                    <span class="font-bold text-blue-700">{{ $pendingActions['new_users'] }}</span>
+                                </a>
+                            @endif
+
                             @if ($pendingActions['new_bookings'] > 0)
-                                <a href="{{ route('admin.transaksi.booking.index', ['status_booking' => 'inactive']) }}"
+                                <a href="{{ route('admin.transaksi.booking.index') }}?status=inactive"
                                     class="flex items-center justify-between bg-white p-3 rounded-lg hover:bg-yellow-100 transition-colors">
                                     <span class="text-gray-700">
                                         <i class="fas fa-clock text-yellow-600 mr-2"></i>Booking Baru
@@ -142,7 +169,7 @@
                             @endif
 
                             @if ($pendingActions['expired_soon'] > 0)
-                                <a href="{{ route('admin.booking.index') }}"
+                                <a href="{{ route('admin.transaksi.booking.index') }}?expired_soon=true"
                                     class="flex items-center justify-between bg-white p-3 rounded-lg hover:bg-yellow-100 transition-colors">
                                     <span class="text-gray-700">
                                         <i class="fas fa-hourglass-end text-orange-600 mr-2"></i>Hampir Expired
@@ -151,13 +178,13 @@
                                 </a>
                             @endif
 
-                            @if ($pendingActions['no_dp'] > 0)
-                                <a href="{{ route('admin.transaksi.booking.index', ['dp' => 'sudah_dp']) }}"
+                            @if ($pendingActions['unpaid_bookings'] > 0)
+                                <a href="{{ route('admin.transaksi.booking.index') }}?unpaid=true"
                                     class="flex items-center justify-between bg-white p-3 rounded-lg hover:bg-yellow-100 transition-colors">
                                     <span class="text-gray-700">
-                                        <i class="fas fa-money-bill-wave text-red-600 mr-2"></i>Sudah Bayar DP
+                                        <i class="fas fa-money-bill-wave text-red-600 mr-2"></i>Belum Bayar
                                     </span>
-                                    <span class="font-bold text-red-700">{{ $pendingActions['no_dp'] }}</span>
+                                    <span class="font-bold text-red-700">{{ $pendingActions['unpaid_bookings'] }}</span>
                                 </a>
                             @endif
                         </div>
@@ -185,34 +212,47 @@
                 </h3>
                 <canvas id="bookingStatusChart"></canvas>
                 <div class="mt-4 space-y-2">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="flex items-center">
-                            <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                            Active
-                        </span>
-                        <span class="font-semibold">{{ $bookingsByStatus['active'] }}</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="flex items-center">
-                            <span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
-                            Inactive
-                        </span>
-                        <span class="font-semibold">{{ $bookingsByStatus['inactive'] }}</span>
-                    </div>
+                    @foreach ($bookingsByStatus as $status => $count)
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="flex items-center">
+                                <span
+                                    class="w-3 h-3 rounded-full mr-2 
+                                    {{ $status === 'Active' ? 'bg-green-500' : '' }}
+                                    {{ $status === 'Inactive' ? 'bg-yellow-500' : '' }}
+                                    {{ $status === 'Expired' ? 'bg-red-500' : '' }}
+                                    {{ $status === 'Cancelled' ? 'bg-gray-500' : '' }}
+                                "></span>
+                                {{ $status }}
+                            </span>
+                            <span class="font-semibold">{{ $count }}</span>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
 
-        {{-- Booking by Jenis Acara --}}
-        @if (count($bookingsByJenis) > 0)
+        {{-- Revenue & Booking by Jenis Acara --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {{-- Revenue Trend --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-chart-bar text-primary mr-2"></i>
-                    Booking per Jenis Acara
+                    <i class="fas fa-chart-area text-primary mr-2"></i>
+                    Tren Pendapatan (6 Bulan)
                 </h3>
-                <canvas id="bookingByJenisChart" height="60"></canvas>
+                <canvas id="revenueTrendChart" height="100"></canvas>
             </div>
-        @endif
+
+            {{-- Booking by Jenis Acara --}}
+            @if (count($bookingsByJenis) > 0)
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-primary mr-2"></i>
+                        Booking per Jenis Acara
+                    </h3>
+                    <canvas id="bookingByJenisChart" height="100"></canvas>
+                </div>
+            @endif
+        </div>
 
         {{-- Recent Bookings & Upcoming Schedules --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -234,7 +274,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">User</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Jadwal
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Acara
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal
                                     </th>
@@ -262,9 +302,8 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <p class="text-sm font-medium text-gray-900">
-                                                {{ $booking->bukaJadwal->jenisAcara->nama ?? '-' }}</p>
-                                            <p class="text-xs text-gray-500">{{ $booking->bukaJadwal->sesi->nama ?? '-' }}
-                                            </p>
+                                                {{ $booking->bukaJadwal->jenisAcara->nama }}</p>
+                                            <p class="text-xs text-gray-500">{{ $booking->bukaJadwal->sesi->nama }}</p>
                                         </td>
                                         <td class="px-6 py-4">
                                             <p class="text-sm text-gray-900">
@@ -278,15 +317,20 @@
                                                     class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
                                                     <i class="fas fa-check-circle mr-1"></i>Active
                                                 </span>
-                                            @elseif($booking->status_booking === 'pending')
+                                            @elseif($booking->status_booking === 'inactive')
                                                 <span
                                                     class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
-                                                    <i class="fas fa-clock mr-1"></i>Pending
+                                                    <i class="fas fa-clock mr-1"></i>Inactive
+                                                </span>
+                                            @elseif($booking->status_booking === 'expired')
+                                                <span
+                                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+                                                    <i class="fas fa-times-circle mr-1"></i>Expired
                                                 </span>
                                             @else
                                                 <span
-                                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
-                                                    <i class="fas fa-times-circle mr-1"></i>Inactive
+                                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                                                    <i class="fas fa-ban mr-1"></i>Cancelled
                                                 </span>
                                             @endif
                                         </td>
@@ -422,24 +466,15 @@
     {{-- Chart.js --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Booking Trend Chart
+        // Booking Trend Chart (7 Days)
         const trendCtx = document.getElementById('bookingTrendChart').getContext('2d');
-        const trendData = @json(array_values($trendData));
-        const trendLabels = @json(array_keys($trendData)).map(date => {
-            const d = new Date(date);
-            return d.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short'
-            });
-        });
-
         new Chart(trendCtx, {
             type: 'line',
             data: {
-                labels: trendLabels,
+                labels: @json($trendLabels),
                 datasets: [{
                     label: 'Booking',
-                    data: trendData,
+                    data: @json($trendData),
                     borderColor: '#0053C5',
                     backgroundColor: 'rgba(0, 83, 197, 0.1)',
                     borderWidth: 3,
@@ -462,13 +497,6 @@
                     tooltip: {
                         backgroundColor: '#1e293b',
                         padding: 12,
-                        titleFont: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            size: 13
-                        },
                         cornerRadius: 8
                     }
                 },
@@ -476,9 +504,59 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            stepSize: 1,
-                            font: {
-                                size: 11
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: '#f1f5f9'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Revenue Trend Chart (6 Months)
+        const revenueCtx = document.getElementById('revenueTrendChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: @json($revenueLabels),
+                datasets: [{
+                    label: 'Pendapatan (Rp)',
+                    data: @json($revenueData),
+                    backgroundColor: '#10b981',
+                    borderRadius: 6,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + (value / 1000000).toFixed(0) + 'jt';
                             }
                         },
                         grid: {
@@ -486,11 +564,6 @@
                         }
                     },
                     x: {
-                        ticks: {
-                            font: {
-                                size: 11
-                            }
-                        },
                         grid: {
                             display: false
                         }
@@ -501,15 +574,13 @@
 
         // Booking Status Pie Chart
         const statusCtx = document.getElementById('bookingStatusChart').getContext('2d');
-        const statusData = @json(array_values($bookingsByStatus));
-
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Active', 'Inactive'],
+                labels: @json(array_keys($bookingsByStatus)),
                 datasets: [{
-                    data: statusData,
-                    backgroundColor: ['#10b981', '#ef4444'],
+                    data: @json(array_values($bookingsByStatus)),
+                    backgroundColor: ['#10b981', '#eab308', '#ef4444', '#6b7280'],
                     borderWidth: 0,
                     hoverOffset: 10
                 }]
@@ -524,13 +595,6 @@
                     tooltip: {
                         backgroundColor: '#1e293b',
                         padding: 12,
-                        titleFont: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            size: 13
-                        },
                         cornerRadius: 8
                     }
                 },
@@ -541,16 +605,13 @@
         // Booking by Jenis Acara Chart
         @if (count($bookingsByJenis) > 0)
             const jenisCtx = document.getElementById('bookingByJenisChart').getContext('2d');
-            const jenisLabels = @json(array_keys($bookingsByJenis));
-            const jenisData = @json(array_values($bookingsByJenis));
-
             new Chart(jenisCtx, {
                 type: 'bar',
                 data: {
-                    labels: jenisLabels,
+                    labels: @json(array_keys($bookingsByJenis)),
                     datasets: [{
                         label: 'Booking',
-                        data: jenisData,
+                        data: @json(array_values($bookingsByJenis)),
                         backgroundColor: '#0053C5',
                         borderRadius: 6,
                         barThickness: 40
@@ -566,13 +627,6 @@
                         tooltip: {
                             backgroundColor: '#1e293b',
                             padding: 12,
-                            titleFont: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
                             cornerRadius: 8
                         }
                     },
@@ -580,21 +634,13 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                stepSize: 1,
-                                font: {
-                                    size: 11
-                                }
+                                stepSize: 1
                             },
                             grid: {
                                 color: '#f1f5f9'
                             }
                         },
                         x: {
-                            ticks: {
-                                font: {
-                                    size: 11
-                                }
-                            },
                             grid: {
                                 display: false
                             }

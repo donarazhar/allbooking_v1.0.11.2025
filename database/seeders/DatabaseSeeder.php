@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -12,17 +11,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Jalankan seeder dalam urutan yang benar
-        // Roles harus pertama karena users membutuhkan role_id
         $this->call([
-            RoleSeeder::class,      
-            SesiSeeder::class,      
-            JenisAcaraSeeder::class, 
-            CateringSeeder::class,  
-            UserSeeder::class,   
-            BukaJadwalSeeder::class,
-            BookingSeeder::class,
-
+            RoleSeeder::class,
+            CabangSeeder::class,
+            UserSeeder::class,
+            // Tambahkan seeder lain di sini nanti
         ]);
+
+        $this->command->info('');
+        $this->command->info('╔════════════════════════════════════════╗');
+        $this->command->info('║   ✅ Database Seeding Completed!      ║');
+        $this->command->info('╚════════════════════════════════════════╝');
+        $this->command->info('');
     }
 }

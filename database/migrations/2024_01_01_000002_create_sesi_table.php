@@ -18,6 +18,7 @@ return new class extends Migration
             $table->time('jam_mulai');
             $table->time('jam_selesai');
             $table->text('keterangan')->nullable();
+            $table->foreignId('cabang_id')->constrained('cabang')->onDelete('cascade');
             $table->timestamps();
         });
     }

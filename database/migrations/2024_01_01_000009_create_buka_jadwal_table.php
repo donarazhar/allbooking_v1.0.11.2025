@@ -13,16 +13,18 @@ return new class extends Migration
     {
         Schema::create('buka_jadwal', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('cabang_id')->constrained('cabang')->onDelete('cascade');
             $table->string('hari', 20);
             $table->date('tanggal');
             $table->foreignId('sesi_id')->constrained('sesi')->onDelete('cascade');
             $table->foreignId('jenisacara_id')->constrained('jenis_acara')->onDelete('cascade');
             $table->enum('status_jadwal', ['available', 'booked'])->default('available');
             $table->timestamps();
-            
-            // Unique constraint untuk mencegah duplikasi jadwal
-            $table->unique(['tanggal', 'sesi_id', 'jenisacara_id']);
+        
+            // Mencegah jadwal ganda pada tanggal & sesi di cabang yang sama
+            $table->unique(['cabang_id', 'tanggal', 'sesi_id', 'jenisacara_id'], 'unique_jadwal_per_cabang');
         });
+        
     }
 
     /**

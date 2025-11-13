@@ -32,7 +32,7 @@ class RoleController extends Controller
             ->orderBy('kode', 'asc')
             ->get();
             
-        return view('master.role.index', compact('roles'));
+        return view('admin.manajemen.role.index', compact('roles'));
     }
 
     /**
@@ -120,7 +120,7 @@ class RoleController extends Controller
         try {
             $role->update($validated);
 
-            return redirect()->route('admin.master.role.index')
+            return redirect()->route('admin.manajemen.role.index')
                 ->with('success', $message);
         } catch (\Exception $e) {
             Log::error('Error updating role: ' . $e->getMessage());
@@ -142,7 +142,7 @@ class RoleController extends Controller
     {
         // 1. Protect system roles
         if (in_array($role->kode, self::PROTECTED_ROLES)) {
-            return redirect()->route('admin.master.role.index')
+            return redirect()->route('admin.manajemen.role.index')
                 ->with('error', 'Role sistem tidak dapat dihapus!');
         }
 
@@ -150,7 +150,7 @@ class RoleController extends Controller
         $userCount = $role->users()->count();
         
         if ($userCount > 0) {
-            return redirect()->route('admin.master.role.index')
+            return redirect()->route('admin.manajemen.role.index')
                 ->with('error', "Role tidak dapat dihapus karena masih digunakan oleh {$userCount} user!");
         }
 
@@ -159,7 +159,7 @@ class RoleController extends Controller
             $roleName = $role->nama;
             $role->delete();
 
-            return redirect()->route('admin.master.role.index')
+            return redirect()->route('admin.manajemen.role.index')
                 ->with('success', "Role '{$roleName}' berhasil dihapus!");
         } catch (\Exception $e) {
             Log::error('Error deleting role: ' . $e->getMessage(), [
@@ -167,7 +167,7 @@ class RoleController extends Controller
                 'role_kode' => $role->kode
             ]);
 
-            return redirect()->route('admin.master.role.index')
+            return redirect()->route('admin.manajemen.role.index')
                 ->with('error', 'Terjadi kesalahan saat menghapus role. Silakan coba lagi.');
         }
     }

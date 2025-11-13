@@ -18,8 +18,23 @@ return new class extends Migration
             $table->string('password');
             $table->string('no_hp', 20)->unique();
             $table->text('alamat')->nullable();
+            // Tambah kolom baru setelah kolom alamat
+            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable();
+            $table->date('tgl_lahir')->nullable();
+            $table->string('nik', 16)->nullable();
+            // Kolom wilayah
+            $table->string('provinsi_id', 2)->nullable();
+            $table->string('provinsi_nama')->nullable();
+            $table->string('kabupaten_id', 4)->nullable();
+            $table->string('kabupaten_nama')->nullable();
+            $table->string('kecamatan_id', 7)->nullable();
+            $table->string('kecamatan_nama')->nullable();
+            $table->string('kelurahan_id', 10)->nullable();
+            $table->string('kelurahan_nama')->nullable();
+            $table->string('kode_pos', 5)->nullable();
             $table->string('foto')->nullable();
             $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
+            $table->foreignId('cabang_id')->constrained('cabang')->onDelete('cascade');
             $table->enum('status_users', ['active', 'inactive'])->default('active');
             $table->rememberToken();
             $table->timestamps();

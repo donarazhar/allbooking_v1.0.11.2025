@@ -57,37 +57,56 @@
                     </div>
                 </div>
 
-                {{-- Daftar Menu Navigasi (Urutan Baru) --}}
+
+                {{-- Daftar Menu Navigasi --}}
                 <nav class="flex-1 overflow-y-auto p-4 space-y-1">
-                    {{-- Link Dashboard Utama --}}
-                    <a href="/dashboard"
-                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('dashboard') ? 'active' : '' }}">
+
+                    {{-- Dashboard --}}
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home w-5"></i>
                         <span class="font-medium">Dashboard</span>
                     </a>
 
-                    {{-- 1. GRUP MENU MANAJEMEN --}}
-                    <div class="pt-4 pb-2">
-                        <button onclick="toggleMenu('manajemen')"
-                            class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
-                            <span>Manajemen</span>
-                            <i id="manajemen-icon" class="fas fa-chevron-down transition-transform duration-200"></i>
-                        </button>
-                    </div>
-                    <div id="manajemen-menu" class="space-y-1 overflow-hidden transition-all duration-300">
-                        <a href="/master/role"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/role*') ? 'active' : '' }}">
-                            <i class="fas fa-user-tag w-5"></i>
-                            <span class="font-medium">Role</span>
-                        </a>
-                        <a href="/users"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('users*') ? 'active' : '' }}">
-                            <i class="fas fa-users w-5"></i>
-                            <span class="font-medium">User</span>
-                        </a>
-                    </div>
+                    {{-- MANAJEMEN - Only for Super Admin --}}
+                    @if (auth()->user()->role->kode === 'SUPERADMIN')
+                        <div class="pt-4 pb-2">
+                            <button onclick="toggleMenu('manajemen')"
+                                class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
+                                <span>Manajemen</span>
+                                <i id="manajemen-icon"
+                                    class="fas fa-chevron-down transition-transform duration-200"></i>
+                            </button>
+                        </div>
+                        <div id="manajemen-menu" class="space-y-1 overflow-hidden transition-all duration-300">
+                            <a href="{{ route('admin.master.role.index') }}"
+                                class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.master.role.*') ? 'active' : '' }}">
+                                <i class="fas fa-user-tag w-5"></i>
+                                <span class="font-medium">Role</span>
+                            </a>
+                            <a href="{{ route('admin.users.index') }}"
+                                class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                                <i class="fas fa-users w-5"></i>
+                                <span class="font-medium">Semua User</span>
+                            </a>
+                        </div>
+                    @endif
 
-                    {{-- 2. GRUP MENU MASTER DATA --}}
+                    {{-- USER MENU - For Admin Cabang (Only users who booked) --}}
+                    @if (auth()->user()->role->kode === 'ADMIN')
+                        <div class="pt-4 pb-2">
+                            <span class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                Manajemen
+                            </span>
+                        </div>
+                        <a href="{{ route('admin.users.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="font-medium">User Booking</span>
+                        </a>
+                    @endif
+
+                    {{-- MASTER DATA --}}
                     <div class="pt-4 pb-2">
                         <button onclick="toggleMenu('masterData')"
                             class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
@@ -96,24 +115,24 @@
                         </button>
                     </div>
                     <div id="masterData-menu" class="space-y-1 overflow-hidden transition-all duration-300">
-                        <a href="/master/sesi"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/sesi*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.master.sesi.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.master.sesi.*') ? 'active' : '' }}">
                             <i class="fas fa-clock w-5"></i>
                             <span class="font-medium">Sesi</span>
                         </a>
-                        <a href="/master/jenis-acara"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/jenis-acara*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.master.jenis-acara.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.master.jenis-acara.*') ? 'active' : '' }}">
                             <i class="fas fa-list w-5"></i>
                             <span class="font-medium">Jenis Acara</span>
                         </a>
-                        <a href="/master/catering"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('master/catering*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.master.catering.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.master.catering.*') ? 'active' : '' }}">
                             <i class="fas fa-utensils w-5"></i>
                             <span class="font-medium">Rekanan Catering</span>
                         </a>
                     </div>
 
-                    {{-- 3. GRUP MENU TRANSAKSI --}}
+                    {{-- TRANSAKSI --}}
                     <div class="pt-4 pb-2">
                         <button onclick="toggleMenu('transaksi')"
                             class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
@@ -122,24 +141,24 @@
                         </button>
                     </div>
                     <div id="transaksi-menu" class="space-y-1 overflow-hidden transition-all duration-300">
-                        <a href="/transaksi/buka-jadwal"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('transaksi/buka-jadwal*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.transaksi.buka-jadwal.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.transaksi.buka-jadwal.*') ? 'active' : '' }}">
                             <i class="fas fa-calendar-check w-5"></i>
                             <span class="font-medium">Buka Jadwal</span>
                         </a>
-                        <a href="/transaksi/booking"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('transaksi/booking*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.transaksi.booking.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.transaksi.booking.*') ? 'active' : '' }}">
                             <i class="fas fa-bookmark w-5"></i>
                             <span class="font-medium">Booking</span>
                         </a>
-                        <a href="/transaksi/pembayaran"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('transaksi/pembayaran*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.transaksi.pembayaran.index') }}"
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.transaksi.pembayaran.*') ? 'active' : '' }}">
                             <i class="fas fa-money-bill-wave w-5"></i>
                             <span class="font-medium">Pembayaran</span>
                         </a>
                     </div>
 
-                    {{-- 4. GRUP MENU LAPORAN --}}
+                    {{-- LAPORAN --}}
                     <div class="pt-4 pb-2">
                         <button onclick="toggleMenu('laporan')"
                             class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
@@ -149,12 +168,12 @@
                     </div>
                     <div id="laporan-menu" class="space-y-1 overflow-hidden transition-all duration-300">
                         <a href="{{ route('admin.laporan.pengguna') }}"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('laporan/pengguna*') ? 'active' : '' }}">
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.laporan.pengguna') ? 'active' : '' }}">
                             <i class="fas fa-file-alt w-5"></i>
                             <span class="font-medium">Laporan Pengguna</span>
                         </a>
                         <a href="{{ route('admin.laporan.keuangan') }}"
-                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->is('laporan/keuangan*') ? 'active' : '' }}">
+                            class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.laporan.keuangan') ? 'active' : '' }}">
                             <i class="fas fa-chart-line w-5"></i>
                             <span class="font-medium">Laporan Keuangan</span>
                         </a>
@@ -276,7 +295,7 @@
             });
         });
     </script>
-    
+
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Laporan Pengguna')
 @section('page-title', 'Laporan Pengguna')
@@ -105,8 +105,8 @@
                 <tbody class="divide-y divide-gray-200">
                     @forelse($users as $index => $user)
                         @php
-                            $totalBayar = $user->bookings->sum(function($booking) {
-                                return $booking->pembayaran->sum('nominal');
+                            $totalBayar = $user->transaksiBooking->sum(function($booking) {
+                                return $booking->transaksiPembayaran->sum('nominal');
                             });
                         @endphp
                         <tr class="hover:bg-gray-50 transition-colors">

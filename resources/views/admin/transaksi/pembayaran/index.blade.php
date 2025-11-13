@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Pembayaran - Sistem Manajemen Aula')
 @section('page-title', 'Manajemen Pembayaran')
@@ -264,7 +264,7 @@
                     <select id="booking_id" name="booking_id" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
                         <option value="">Pilih Booking</option>
-                        @foreach(\App\Models\Booking::with(['user', 'bukaJadwal.sesi', 'bukaJadwal.jenisAcara'])->where('status_booking', 'active')->orderBy('tgl_booking', 'desc')->get() as $b)
+                        @foreach(\App\Models\TransaksiBooking::with(['user', 'bukaJadwal.sesi', 'bukaJadwal.jenisAcara'])->where('status_booking', 'active')->orderBy('tgl_booking', 'desc')->get() as $b)
                             <option value="{{ $b->id }}">
                                 {{ $b->user->nama ?? 'User' }} | 
                                 @if($b->bukaJadwal)

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('jenis_bayar', ['DP', 'Termin 1', 'Termin 2', 'Termin 3', 'Pelunasan']);
             $table->string('bukti_bayar');
             $table->decimal('nominal', 15, 2);
+            $table->foreignId('cabang_id')->constrained('cabang')->onDelete('cascade');
             $table->timestamps();
         });
     }

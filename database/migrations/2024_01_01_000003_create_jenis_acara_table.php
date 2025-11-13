@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('keterangan')->nullable();
             $table->decimal('harga', 15, 2);
             $table->enum('status_jenis_acara', ['active', 'inactive'])->default('active');
+            $table->foreignId('cabang_id')->constrained('cabang')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -2,70 +2,68 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Role;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
 class RoleSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // Hapus semua data lama
+        // Truncate table untuk development
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        User::truncate();
         Role::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Create Roles
-        $adminRole = Role::create([
-            'kode' => 'ADM',
-            'nama' => 'Admin',
-            'keterangan' => 'Administrator dengan akses penuh ke semua fitur sistem'
-        ]);
+        $roles = [
+            [
+                'kode' => 'SUPERADMIN',
+                'nama' => 'Super Administrator',
+                'keterangan' => 'Memiliki akses penuh ke seluruh sistem dan semua cabang. Dapat mengelola master data, users, dan monitoring seluruh transaksi.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'kode' => 'ADMIN',
+                'nama' => 'Admin Cabang',
+                'keterangan' => 'Mengelola operasional cabang masing-masing. Dapat mengelola sesi, jenis acara, jadwal, booking, dan pembayaran untuk cabang yang ditugaskan.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'kode' => 'PIMPINAN',
+                'nama' => 'Pimpinan Cabang',
+                'keterangan' => 'Monitoring dan approval untuk cabang yang dipimpin. Dapat melihat laporan, monitoring booking, dan memberikan approval untuk transaksi di cabangnya.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'kode' => 'USER',
+                'nama' => 'User/Jamaah',
+                'keterangan' => 'User umum yang dapat melakukan booking aula di semua cabang. Dapat melihat jadwal tersedia, membuat booking, dan melakukan pembayaran.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ];
 
-        $pimpinanRole = Role::create([
-            'kode' => 'PMP',
-            'nama' => 'Pimpinan',
-            'keterangan' => 'Pimpinan yang dapat melihat laporan dan dashboard'
-        ]);
+        foreach ($roles as $role) {
+            Role::create($role);
+        }
 
-        $userRole = Role::create([
-            'kode' => 'USR',
-            'nama' => 'User',
-            'keterangan' => 'Pengguna/Klien yang dapat melakukan booking dan pembayaran'
-        ]);
-
-        // Create Users dengan role yang benar
-        User::create([
-            'nama' => 'Administrator',
-            'email' => 'admin@aula.com',
-            'no_hp' => '081234567221',
-            'password' => Hash::make('admin123'),
-            'role_id' => $adminRole->id,
-            'status_users' => 'active'
-        ]);
-
-        User::create([
-            'nama' => 'Pimpinan',
-            'email' => 'pimpinan@aula.com',
-            'no_hp' => '081234567101',
-            'password' => Hash::make('pimpinan123'),
-            'role_id' => $pimpinanRole->id,
-            'status_users' => 'active'
-        ]);
-
-        User::create([
-            'nama' => 'User Demo',
-            'email' => 'user@aula.com',
-            'no_hp' => '081234567091',
-            'password' => Hash::make('user123'),
-            'role_id' => $userRole->id,
-            'status_users' => 'active'
-        ]);
-
-        echo "✓ Roles created: {$adminRole->id}, {$pimpinanRole->id}, {$userRole->id}\n";
-        echo "✓ Users created successfully\n";
+        $this->command->info('✅ Roles seeded successfully!');
+        $this->command->table(
+            ['Kode', 'Nama', 'Keterangan'],
+            collect($roles)->map(function ($role) {
+                return [
+                    $role['kode'],
+                    $role['nama'],
+                    substr($role['keterangan'], 0, 50) . '...'
+                ];
+            })
+        );
     }
 }

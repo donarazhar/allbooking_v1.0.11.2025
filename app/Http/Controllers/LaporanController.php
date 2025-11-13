@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Booking;
-use App\Models\Pembayaran;
+use App\Models\TransaksiBooking;
+use App\Models\TransaksiPembayaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,18 +16,18 @@ class LaporanController extends Controller
     public function penggunaAdmin(Request $request)
     {
         // Same logic as pengguna()
-        $query = User::with(['bookings.pembayaran', 'bookings.bukaJadwal'])
+        $query = User::with(['transaksiBooking.transaksiPembayaran', 'transaksiBooking.bukaJadwal'])
             ->where('role_id', '!=', 1)
-            ->withCount('bookings');
+            ->withCount('transaksiBooking');
 
         if ($request->filled('start_date')) {
-            $query->whereHas('bookings', function ($q) use ($request) {
+            $query->whereHas('transaksiBooking', function ($q) use ($request) {
                 $q->whereDate('tgl_booking', '>=', $request->start_date);
             });
         }
 
         if ($request->filled('end_date')) {
-            $query->whereHas('bookings', function ($q) use ($request) {
+            $query->whereHas('transaksiBooking', function ($q) use ($request) {
                 $q->whereDate('tgl_booking', '<=', $request->end_date);
             });
         }
@@ -35,7 +35,7 @@ class LaporanController extends Controller
         $users = $query->latest()->get();
 
         $totalUsers = $users->count();
-        $totalBookings = Booking::count();
+        $totalBookings = TransaksiBooking::count();
         $activeUsers = $users->filter(function ($user) {
             return $user->bookings_count > 0;
         })->count();
@@ -51,7 +51,7 @@ class LaporanController extends Controller
 
     public function keuanganAdmin(Request $request)
     {
-        $query = Pembayaran::with(['bookings.user', 'bookings.bukaJadwal']);
+        $query = TransaksiPembayaran::with(['transaksiBooking.user', 'transaksiBooking.bukaJadwal']);
 
         if ($request->filled('start_date')) {
             $query->whereDate('tgl_pembayaran', '>=', $request->start_date);
@@ -94,7 +94,7 @@ class LaporanController extends Controller
     public function penggunaPimpinan(Request $request)
     {
         // Same as penggunaAdmin but use pimpinan layout
-        $query = User::with(['bookings.pembayaran', 'bookings.bukaJadwal'])
+        $query = User::with(['bookings.transaksiPembayaran', 'bookings.bukaJadwal'])
             ->where('role_id', '!=', 1)
             ->withCount('bookings');
 

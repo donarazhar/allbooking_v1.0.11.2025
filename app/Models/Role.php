@@ -2,29 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 
 class Role extends Model
 {
-    /**
-     * Mendefinisikan kolom mana saja yang boleh diisi secara massal (mass assignable).
-     * Ini adalah mekanisme keamanan untuk mencegah pengisian kolom yang tidak diinginkan.
-     *
-     * @var array
-     */
+    use HasFactory;
+
+    protected $table = 'roles';
+
     protected $fillable = [
         'kode',
         'nama',
-        'keterangan'
+        'keterangan',
     ];
 
-    /**
-     * Mendefinisikan relasi "one-to-many" ke model User.
-     * Artinya, satu peran (Role) dapat dimiliki oleh banyak pengguna (User).
-     */
+    // Relationship
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'role_id');
     }
 }

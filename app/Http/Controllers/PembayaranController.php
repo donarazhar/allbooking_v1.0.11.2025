@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pembayaran;
+use App\Models\TransaksiPembayaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -11,7 +11,7 @@ class PembayaranController extends Controller
 {
     public function index()
     {
-        $pembayaran = Pembayaran::with([
+        $pembayaran = TransaksiPembayaran::with([
             'bookings.user',
             'bookings.bukaJadwal.sesi',
             'bookings.bukaJadwal.jenisAcara'

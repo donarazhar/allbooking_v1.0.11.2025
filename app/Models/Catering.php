@@ -2,34 +2,39 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Catering extends Model
 {
-    /**
-     * Mendefinisikan tabel database yang digunakan oleh model ini.
-     */
+    use HasFactory;
+
     protected $table = 'catering';
 
-    /**
-     * Mendefinisikan kolom mana saja yang boleh diisi saat membuat atau mengubah data.
-     */
     protected $fillable = [
         'nama',
         'email',
         'no_hp',
         'alamat',
         'password',
+        'keterangan',
         'foto',
-        'keterangan'
     ];
 
-    /**
-     * Mendefinisikan relasi ke model Booking.
-     * Satu catering dapat memiliki banyak booking.
-     */
-    public function bookings()
+    protected $hidden = [
+        'password',
+    ];
+
+    // Many to Many dengan Cabang
+    public function cabang()
     {
-        return $this->hasMany(Booking::class);
+        return $this->belongsToMany(Cabang::class, 'cabang_catering', 'catering_id', 'cabang_id')
+            ->withTimestamps();
+    }
+
+    // Relationship dengan TransaksiBooking
+    public function transaksiBooking()
+    {
+        return $this->hasMany(TransaksiBooking::class, 'catering_id');
     }
 }
