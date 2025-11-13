@@ -1,6 +1,6 @@
 @extends('layouts.user')
 
-@section('title', 'Dashboard User - Sistem Manajemen Aula')
+@section('title', 'Dashboard User - Sistem Booking Aula YPI Al Azhar')
 
 @section('content')
     <div class="space-y-6">
@@ -46,63 +46,89 @@
             </div>
         </div>
 
-        {{-- QUICK ACTIONS - JENIS ACARA --}}
+        {{-- QUICK ACTIONS - CABANG LIST --}}
         <div>
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-gray-900">
-                    <i class="fas fa-tags text-primary mr-2"></i>
-                    Pilih Jenis Acara
+                    <i class="fas fa-building text-primary mr-2"></i>
+                    Pilih Cabang
                 </h2>
                 <a href="{{ route('user.booking') }}" class="text-sm text-primary hover:text-blue-700 transition-colors">
                     Lihat Semua Jadwal <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
 
-            @if ($jenisAcaraList->count() > 0)
+            @if ($cabangList->count() > 0)
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach ($jenisAcaraList as $index => $jenisAcara)
+                    @foreach ($cabangList as $index => $cabang)
                         @php
                             $colors = [
-                                ['from' => 'blue-500', 'to' => 'blue-600', 'icon' => 'fa-calendar-check'],
-                                ['from' => 'purple-500', 'to' => 'purple-600', 'icon' => 'fa-heart'],
-                                ['from' => 'green-500', 'to' => 'green-600', 'icon' => 'fa-users'],
-                                ['from' => 'orange-500', 'to' => 'orange-600', 'icon' => 'fa-graduation-cap'],
-                                ['from' => 'pink-500', 'to' => 'pink-600', 'icon' => 'fa-birthday-cake'],
-                                ['from' => 'indigo-500', 'to' => 'indigo-600', 'icon' => 'fa-briefcase'],
+                                ['from' => 'blue-500', 'to' => 'blue-600', 'bg' => 'blue-100', 'text' => 'blue-600'],
+                                [
+                                    'from' => 'purple-500',
+                                    'to' => 'purple-600',
+                                    'bg' => 'purple-100',
+                                    'text' => 'purple-600',
+                                ],
+                                [
+                                    'from' => 'green-500',
+                                    'to' => 'green-600',
+                                    'bg' => 'green-100',
+                                    'text' => 'green-600',
+                                ],
+                                [
+                                    'from' => 'orange-500',
+                                    'to' => 'orange-600',
+                                    'bg' => 'orange-100',
+                                    'text' => 'orange-600',
+                                ],
+                                ['from' => 'pink-500', 'to' => 'pink-600', 'bg' => 'pink-100', 'text' => 'pink-600'],
+                                [
+                                    'from' => 'indigo-500',
+                                    'to' => 'indigo-600',
+                                    'bg' => 'indigo-100',
+                                    'text' => 'indigo-600',
+                                ],
                             ];
                             $color = $colors[$index % count($colors)];
                         @endphp
 
-                        {{-- UPDATED: Pass jenis_acara as query parameter --}}
-                        <a href="{{ route('user.booking', ['jenis_acara' => $jenisAcara->nama]) }}"
-                            class="group bg-gradient-to-br from-{{ $color['from'] }} to-{{ $color['to'] }} rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+                        <button onclick="openCabangModal({{ $cabang->id }})"
+                            class="group bg-white hover:shadow-xl rounded-xl shadow-md p-6 transition-all transform hover:-translate-y-1 text-left border-2 border-transparent hover:border-{{ $color['text'] }}">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex-1">
-                                    <h3 class="text-xl font-bold mb-2">{{ $jenisAcara->nama }}</h3>
-                                    <p class="text-white/80 text-sm line-clamp-2">
-                                        {{ $jenisAcara->deskripsi ?? 'Tersedia untuk booking' }}
+                                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $cabang->nama }}</h3>
+                                    <p class="text-gray-600 text-sm line-clamp-2">
+                                        {{ $cabang->alamat ?? 'Lokasi cabang YPI Al Azhar' }}
                                     </p>
                                 </div>
-                                <i class="fas {{ $color['icon'] }} text-3xl opacity-80"></i>
+                                <div class="flex-shrink-0 ml-4">
+                                    <div
+                                        class="w-14 h-14 bg-gradient-to-br from-{{ $color['from'] }} to-{{ $color['to'] }} rounded-xl flex items-center justify-center text-white shadow-lg">
+                                        <i class="fas fa-building text-2xl"></i>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="flex items-center justify-between pt-4 border-t border-white/20">
-                                <div class="flex items-center">
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                <div class="flex items-center text-gray-600">
                                     <i class="fas fa-calendar-alt mr-2"></i>
-                                    <span class="text-sm font-medium">{{ $jenisAcara->buka_jadwal_count }} Jadwal</span>
+                                    <span class="text-sm font-medium">{{ $cabang->buka_jadwal_count }} Jadwal
+                                        Tersedia</span>
                                 </div>
-                                <span class="text-sm font-medium group-hover:translate-x-1 transition-transform">
+                                <span
+                                    class="text-sm font-medium text-{{ $color['text'] }} group-hover:translate-x-1 transition-transform">
                                     Lihat Jadwal <i class="fas fa-arrow-right ml-1"></i>
                                 </span>
                             </div>
-                        </a>
+                        </button>
                     @endforeach
                 </div>
             @else
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                    <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
+                    <i class="fas fa-building text-gray-300 text-6xl mb-4"></i>
                     <h3 class="text-xl font-semibold text-gray-700 mb-2">Belum Ada Jadwal Tersedia</h3>
-                    <p class="text-gray-500">Saat ini belum ada jadwal yang dibuka oleh admin</p>
+                    <p class="text-gray-500">Saat ini belum ada jadwal yang dibuka oleh admin di semua cabang</p>
                 </div>
             @endif
         </div>
@@ -176,6 +202,10 @@
                                         {{ $booking->bukaJadwal->sesi->nama ?? 'Sesi' }}
                                     </span>
                                 </div>
+                                <div class="flex items-center text-xs text-gray-500 mb-1">
+                                    <i class="fas fa-building mr-1"></i>
+                                    {{ $booking->cabang->nama ?? '-' }}
+                                </div>
                                 <div class="flex items-center text-xs text-gray-500">
                                     <i class="fas fa-calendar-day mr-1"></i>
                                     {{ $booking->bukaJadwal->hari ?? '-' }},
@@ -244,15 +274,15 @@
                     <ul class="text-sm text-blue-800 space-y-1">
                         <li class="flex items-start">
                             <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
-                            <span>Pilih jenis acara sesuai kebutuhan Anda</span>
+                            <span>Pilih cabang sesuai lokasi yang Anda inginkan</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
+                            <span>Lihat jenis acara yang tersedia di setiap cabang</span>
                         </li>
                         <li class="flex items-start">
                             <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
                             <span>Booking akan dikonfirmasi oleh admin dalam 1x24 jam</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
-                            <span>Lengkapi profile Anda untuk mempermudah proses booking</span>
                         </li>
                         <li class="flex items-start">
                             <i class="fas fa-check text-blue-600 mr-2 mt-0.5"></i>
@@ -264,7 +294,123 @@
         </div>
     </div>
 
+    {{-- MODAL JENIS ACARA PER CABANG --}}
+    @foreach ($cabangList as $cabang)
+        <div id="modal-cabang-{{ $cabang->id }}"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                {{-- HEADER --}}
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">
+                            <i class="fas fa-building text-primary mr-2"></i>
+                            {{ $cabang->nama }}
+                        </h3>
+                        <p class="text-sm text-gray-600 mt-1">Pilih jenis acara yang tersedia</p>
+                    </div>
+                    <button onclick="closeCabangModal({{ $cabang->id }})"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                {{-- CONTENT --}}
+                <div class="p-6">
+                    @if (isset($jenisAcaraPerCabang[$cabang->id]) && $jenisAcaraPerCabang[$cabang->id]->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach ($jenisAcaraPerCabang[$cabang->id] as $index => $jenisAcara)
+                                @php
+                                    $colors = [
+                                        ['from' => 'blue-500', 'to' => 'blue-600', 'icon' => 'fa-calendar-check'],
+                                        ['from' => 'purple-500', 'to' => 'purple-600', 'icon' => 'fa-heart'],
+                                        ['from' => 'green-500', 'to' => 'green-600', 'icon' => 'fa-users'],
+                                        ['from' => 'orange-500', 'to' => 'orange-600', 'icon' => 'fa-graduation-cap'],
+                                        ['from' => 'pink-500', 'to' => 'pink-600', 'icon' => 'fa-birthday-cake'],
+                                        ['from' => 'indigo-500', 'to' => 'indigo-600', 'icon' => 'fa-briefcase'],
+                                    ];
+                                    $color = $colors[$index % count($colors)];
+                                @endphp
+
+                                <a href="{{ route('user.booking', ['cabang_id' => $cabang->id, 'jenis_acara' => $jenisAcara->nama]) }}"
+                                    class="group bg-gradient-to-br from-{{ $color['from'] }} to-{{ $color['to'] }} rounded-xl shadow-md p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="flex-1">
+                                            <h4 class="text-lg font-bold mb-2">{{ $jenisAcara->nama }}</h4>
+                                            <p class="text-white/80 text-sm line-clamp-2">
+                                                {{ $jenisAcara->deskripsi ?? 'Tersedia untuk booking' }}
+                                            </p>
+                                        </div>
+                                        <i class="fas {{ $color['icon'] }} text-3xl opacity-80"></i>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-4 border-t border-white/20">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-calendar-alt mr-2"></i>
+                                            <span class="text-sm font-medium">{{ $jenisAcara->buka_jadwal_count }}
+                                                Jadwal</span>
+                                        </div>
+                                        <span class="text-sm font-medium">
+                                            Rp {{ number_format($jenisAcara->harga, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+
+                                    <div class="mt-4 text-center">
+                                        <span
+                                            class="inline-block px-4 py-2 bg-white/20 rounded-lg text-sm font-medium group-hover:bg-white/30 transition-colors">
+                                            Lihat Jadwal <i class="fas fa-arrow-right ml-1"></i>
+                                        </span>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-12">
+                            <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
+                            <h4 class="text-xl font-semibold text-gray-700 mb-2">Belum Ada Jadwal</h4>
+                            <p class="text-gray-500">Saat ini belum ada jenis acara yang tersedia di cabang ini</p>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- FOOTER --}}
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
+                    <button onclick="closeCabangModal({{ $cabang->id }})"
+                        class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    {{-- JAVASCRIPT --}}
     <script>
+        function openCabangModal(cabangId) {
+            const modal = document.getElementById('modal-cabang-' + cabangId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeCabangModal(cabangId) {
+            const modal = document.getElementById('modal-cabang-' + cabangId);
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('[id^="modal-cabang-"]').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    const cabangId = this.id.replace('modal-cabang-', '');
+                    closeCabangModal(cabangId);
+                }
+            });
+        });
+
         // Auto-hide alerts after 5 seconds
         setTimeout(() => {
             document.querySelectorAll('#successAlert, #errorAlert').forEach(alert => {

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Booking;
 use App\Models\BukaJadwal;
 use App\Models\JenisAcara;
+use App\Models\Cabang;
 use App\Models\Pembayaran;
+use App\Models\TransaksiBooking;
+use App\Models\TransaksiPembayaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,41 +22,52 @@ class UserDashboardController extends Controller
         $user = Auth::user();
 
         // Count bookings
-        $totalBooking = Booking::where('user_id', $user->id)->count();
-        $pendingBooking = Booking::where('user_id', $user->id)
+        $totalBooking = TransaksiBooking::where('user_id', $user->id)->count();
+        $pendingBooking = TransaksiBooking::where('user_id', $user->id)
             ->where('status_booking', 'inactive')
             ->count();
-        $approvedBooking = Booking::where('user_id', $user->id)
+        $approvedBooking = TransaksiBooking::where('user_id', $user->id)
             ->where('status_booking', 'active')
             ->count();
 
         // Get recent bookings with all relations
-        $recentBookings = Booking::with([
+        $recentBookings = TransaksiBooking::with([
             'bukaJadwal.sesi',
             'bukaJadwal.jenisAcara',
-            'catering'
+            'catering',
+            'cabang'
         ])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // ✅ NEW: Get jenis acara yang memiliki jadwal tersedia
-        $jenisAcaraList = JenisAcara::whereHas('bukaJadwal', function ($query) {
+        // ✅ NEW: Get cabang yang memiliki jadwal tersedia
+        $cabangList = Cabang::whereHas('bukaJadwal', function ($query) {
             $query->whereDate('tanggal', '>=', now())
-                ->where('status_jadwal', 'available')
-                ->whereDoesntHave('bookings', function ($q) {
-                    $q->where('status_booking', 'active');
-                });
+                ->where('status_jadwal', 'available');
         })
             ->withCount(['bukaJadwal' => function ($query) {
                 $query->whereDate('tanggal', '>=', now())
-                    ->where('status_jadwal', 'available')
-                    ->whereDoesntHave('bookings', function ($q) {
-                        $q->where('status_booking', 'active');
-                    });
+                    ->where('status_jadwal', 'available');
             }])
+            ->orderBy('nama')
             ->get();
+
+        // ✅ NEW: Get jenis acara per cabang (untuk modal)
+        $jenisAcaraPerCabang = [];
+        foreach ($cabangList as $cabang) {
+            $jenisAcaraPerCabang[$cabang->id] = JenisAcara::where('cabang_id', $cabang->id)
+                ->whereHas('bukaJadwal', function ($query) {
+                    $query->whereDate('tanggal', '>=', now())
+                        ->where('status_jadwal', 'available');
+                })
+                ->withCount(['bukaJadwal' => function ($query) {
+                    $query->whereDate('tanggal', '>=', now())
+                        ->where('status_jadwal', 'available');
+                }])
+                ->get();
+        }
 
         return view('user.dashboard', compact(
             'user',
@@ -62,7 +75,8 @@ class UserDashboardController extends Controller
             'pendingBooking',
             'approvedBooking',
             'recentBookings',
-            'jenisAcaraList' // ✅ NEW
+            'cabangList',
+            'jenisAcaraPerCabang'
         ));
     }
 
@@ -194,7 +208,6 @@ class UserDashboardController extends Controller
                 ->withInput();
         }
     }
-    
 
     public function updatePassword(Request $request)
     {
@@ -233,19 +246,50 @@ class UserDashboardController extends Controller
         }
     }
 
-    public function booking()
+    public function booking(Request $request)
     {
-        // Get available jadwal (future dates, not booked)
-        $jadwalTersedia = BukaJadwal::with(['sesi', 'jenisAcara'])
-            ->whereDate('tanggal', '>=', now())
-            ->where('status_jadwal', 'available')
-            ->whereDoesntHave('bookings', function ($query) {
-                $query->where('status_booking', 'active');
-            })
-            ->orderBy('tanggal', 'asc')
-            ->get();
+        // Get cabang_id and jenis_acara from request
+        $cabangId = $request->get('cabang_id');
+        $jenisAcara = $request->get('jenis_acara');
 
-        return view('user.jadwal', compact('jadwalTersedia'));
+        // Query builder
+        $query = BukaJadwal::with(['sesi', 'jenisAcara', 'cabang'])
+            ->whereDate('tanggal', '>=', now())
+            ->where('status_jadwal', 'available');
+
+        // Filter by cabang if provided
+        if ($cabangId) {
+            $query->where('cabang_id', $cabangId);
+        }
+
+        // Filter by jenis acara if provided
+        if ($jenisAcara) {
+            $query->whereHas('jenisAcara', function ($q) use ($jenisAcara) {
+                $q->where('nama', 'like', "%{$jenisAcara}%");
+            });
+        }
+
+        $jadwalTersedia = $query->orderBy('tanggal', 'asc')->get();
+
+        // Get cabang list for filter
+        $cabangList = Cabang::orderBy('nama')->get();
+
+        // ✅ NEW: Get catering data per cabang
+        $cateringPerCabang = [];
+        foreach ($cabangList as $cabang) {
+            $cateringPerCabang[$cabang->id] = $cabang->catering()
+                ->select('catering.id', 'catering.nama', 'catering.no_hp')
+                ->get()
+                ->map(function ($catering) {
+                    return [
+                        'id' => $catering->id,
+                        'nama' => $catering->nama,
+                        'no_hp' => $catering->no_hp
+                    ];
+                });
+        }
+
+        return view('user.jadwal', compact('jadwalTersedia', 'cabangList', 'cateringPerCabang'));
     }
 
     public function storeBooking(Request $request)
@@ -273,10 +317,14 @@ class UserDashboardController extends Controller
                 return back()->with('error', 'Jadwal sudah tidak tersedia!');
             }
 
+            // Get cabang_id from jadwal
+            $cabangId = $jadwal->cabang_id;
+
             // Create booking
-            $booking = Booking::create([
+            $booking = TransaksiBooking::create([
                 'user_id' => Auth::id(),
                 'bukajadwal_id' => $validated['bukajadwal_id'],
+                'cabang_id' => $cabangId,
                 'tgl_booking' => $validated['tgl_booking'],
                 'tgl_expired_booking' => \Carbon\Carbon::parse($validated['tgl_booking'])->addWeeks(2),
                 'status_booking' => 'inactive', // Pending approval
@@ -300,11 +348,13 @@ class UserDashboardController extends Controller
 
     public function myBookings()
     {
-        $bookings = Booking::with([
+        $bookings = TransaksiBooking::with([
             'bukaJadwal.sesi',
             'bukaJadwal.jenisAcara',
+            'bukaJadwal.cabang',
             'catering',
-            'pembayaran'
+            'cabang',
+            'transaksiPembayaran'  // ✅ Relasi sudah di-load di sini
         ])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
@@ -312,15 +362,16 @@ class UserDashboardController extends Controller
 
         return view('user.my-bookings', compact('bookings'));
     }
-
     public function bayar()
     {
         // Get bookings that can be paid
-        $bookings = Booking::with([
+        $bookings = TransaksiBooking::with([
             'bukaJadwal.sesi',
             'bukaJadwal.jenisAcara',
+            'bukaJadwal.cabang',
             'catering',
-            'pembayaran'
+            'cabang',
+            'transaksiPembayaran'
         ])
             ->where('user_id', Auth::id())
             ->whereIn('status_booking', ['active', 'inactive'])
@@ -332,7 +383,6 @@ class UserDashboardController extends Controller
 
     public function storeBayar(Request $request)
     {
-        // ✅ FIX 1: Add detailed logging
         Log::info('Payment attempt started', [
             'user_id' => Auth::id(),
             'request_data' => $request->except(['bukti_bayar'])
@@ -364,7 +414,7 @@ class UserDashboardController extends Controller
         Log::info('Validation passed', ['validated_data' => $validated]);
 
         // Verify booking belongs to current user
-        $booking = Booking::where('id', $validated['booking_id'])
+        $booking = TransaksiBooking::where('id', $validated['booking_id'])
             ->where('user_id', Auth::id())
             ->first();
 
@@ -380,7 +430,6 @@ class UserDashboardController extends Controller
 
         DB::beginTransaction();
         try {
-            // ✅ FIX 2: Create uploads directory if not exists
             $uploadPath = public_path('uploads/bukti_bayar');
             if (!file_exists($uploadPath)) {
                 Log::info('Creating upload directory', ['path' => $uploadPath]);
@@ -393,8 +442,6 @@ class UserDashboardController extends Controller
                 Log::info('Processing file upload');
 
                 $file = $request->file('bukti_bayar');
-
-                // ✅ FIX 3: Better filename generation
                 $filename = 'bayar_' . $booking->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
                 Log::info('Uploading file', [
@@ -403,7 +450,6 @@ class UserDashboardController extends Controller
                     'mime' => $file->getMimeType()
                 ]);
 
-                // ✅ FIX 4: Use try-catch for file upload
                 try {
                     $file->move($uploadPath, $filename);
                     Log::info('File uploaded successfully', ['path' => $uploadPath . '/' . $filename]);
@@ -420,9 +466,10 @@ class UserDashboardController extends Controller
                 throw new \Exception('Bukti bayar tidak ditemukan');
             }
 
-            // ✅ FIX 5: Prepare data for insertion
+            // ✅ FIX: Tambahkan cabang_id dari booking
             $pembayaranData = [
                 'booking_id' => $validated['booking_id'],
+                'cabang_id' => $booking->cabang_id, // ✅ TAMBAHKAN INI
                 'tgl_pembayaran' => $validated['tgl_pembayaran'],
                 'jenis_bayar' => $validated['jenis_bayar'],
                 'nominal' => $validated['nominal'],
@@ -432,7 +479,7 @@ class UserDashboardController extends Controller
             Log::info('Creating pembayaran record', ['data' => $pembayaranData]);
 
             // Create pembayaran
-            $pembayaran = Pembayaran::create($pembayaranData);
+            $pembayaran = TransaksiPembayaran::create($pembayaranData);
 
             Log::info('Pembayaran created successfully', ['id' => $pembayaran->id]);
 
@@ -460,7 +507,6 @@ class UserDashboardController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // ✅ FIX 6: Enhanced error logging
             Log::error('Payment submission failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -475,7 +521,6 @@ class UserDashboardController extends Controller
                 unlink(public_path('uploads/bukti_bayar/' . $filename));
             }
 
-            // ✅ FIX 7: Return detailed error in development
             if (config('app.debug')) {
                 return back()
                     ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())

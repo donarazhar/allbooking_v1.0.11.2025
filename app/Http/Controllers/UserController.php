@@ -263,7 +263,7 @@ class UserController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('success', 'User berhasil ditambahkan!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -472,7 +472,7 @@ class UserController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('success', 'User berhasil diupdate!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -495,13 +495,13 @@ class UserController extends Controller
 
         // Protect super admin
         if (in_array($user->email, self::PROTECTED_USERS)) {
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('error', 'User Super Admin tidak dapat dihapus!');
         }
 
         // Prevent deleting own account
         if ($user->id === Auth::id()) {
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('error', 'Anda tidak dapat menghapus akun sendiri!');
         }
 
@@ -516,7 +516,7 @@ class UserController extends Controller
         $bookingCount = $user->transaksiBooking()->count();
 
         if ($bookingCount > 0) {
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('error', "User tidak dapat dihapus karena memiliki {$bookingCount} transaksi booking!");
         }
 
@@ -529,11 +529,11 @@ class UserController extends Controller
             $userName = $user->nama;
             $user->delete();
 
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('success', "User '{$userName}' berhasil dihapus!");
         } catch (\Exception $e) {
             Log::error('Error deleting user: ' . $e->getMessage());
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('error', 'Terjadi kesalahan saat menghapus user.');
         }
     }
@@ -550,7 +550,7 @@ class UserController extends Controller
 
         // Protect super admin
         if (in_array($user->email, self::PROTECTED_USERS)) {
-            return redirect()->route('admin.manajemen.users.index')
+            return redirect()->route('admin.users.index')
                 ->with('error', 'Status Super Admin tidak dapat diubah!');
         }
 
@@ -566,7 +566,7 @@ class UserController extends Controller
 
         $statusText = $newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan';
 
-        return redirect()->route('admin.manajemen.users.index')
+        return redirect()->route('admin.users.index')
             ->with('success', "User '{$user->nama}' berhasil {$statusText}!");
     }
 }

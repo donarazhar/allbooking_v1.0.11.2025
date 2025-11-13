@@ -12,16 +12,16 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            // Master Data (sudah ada sebelumnya)
             RoleSeeder::class,
             CabangSeeder::class,
             UserSeeder::class,
-            // Tambahkan seeder lain di sini nanti
-        ]);
+            CateringSeeder::class,
 
-        $this->command->info('');
-        $this->command->info('╔════════════════════════════════════════╗');
-        $this->command->info('║   ✅ Database Seeding Completed!      ║');
-        $this->command->info('╚════════════════════════════════════════╝');
-        $this->command->info('');
+            // NEW: Seeder untuk testing
+            SesiSeeder::class,           // ← Tambahkan
+            JenisAcaraSeeder::class,     // ← Tambahkan
+            BukaJadwalSeeder::class,     // ← Tambahkan
+        ]);
     }
 }

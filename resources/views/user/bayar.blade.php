@@ -66,9 +66,9 @@
         <div class="space-y-6">
             @forelse($bookings as $booking)
                 @php
-                    $totalBayar = $booking->pembayaran->sum('nominal');
-                    $sudahBayarDP = $booking->pembayaran->where('jenis_bayar', 'DP')->count() > 0;
-                    $sudahPelunasan = $booking->pembayaran->where('jenis_bayar', 'Pelunasan')->count() > 0;
+                    $totalBayar = $booking->transaksiPembayaran->sum('nominal');
+                    $sudahBayarDP = $booking->transaksiPembayaran->where('jenis_bayar', 'DP')->count() > 0;
+                    $sudahPelunasan = $booking->transaksiPembayaran->where('jenis_bayar', 'Pelunasan')->count() > 0;
 
                     // Status display
                     $isExpired =
@@ -140,6 +140,10 @@
                                 @if ($booking->bukaJadwal)
                                     <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                                         <span>
+                                            <i class="fas fa-building mr-1 text-gray-400"></i>
+                                            {{ $booking->cabang->nama ?? '-' }}
+                                        </span>
+                                        <span>
                                             <i class="fas fa-clock mr-1 text-gray-400"></i>
                                             {{ $booking->bukaJadwal->sesi->nama ?? '-' }}
                                         </span>
@@ -169,7 +173,7 @@
                                     Rp {{ number_format($totalBayar, 0, ',', '.') }}
                                 </p>
                                 <p class="text-xs text-gray-500 mt-1">
-                                    {{ $booking->pembayaran->count() }} pembayaran
+                                    {{ $booking->transaksiPembayaran->count() }} pembayaran
                                 </p>
                             </div>
                         </div>
@@ -185,9 +189,9 @@
                                     Riwayat Pembayaran
                                 </h4>
 
-                                @if ($booking->pembayaran->count() > 0)
+                                @if ($booking->transaksiPembayaran->count() > 0)
                                     <div class="space-y-2">
-                                        @foreach ($booking->pembayaran->sortByDesc('tgl_pembayaran') as $pembayaran)
+                                        @foreach ($booking->transaksiPembayaran->sortByDesc('tgl_pembayaran') as $pembayaran)
                                             <div
                                                 class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div class="flex items-center justify-between mb-2">
@@ -404,6 +408,10 @@
                     </h4>
                     <div class="grid grid-cols-2 gap-3 text-sm">
                         <div>
+                            <p class="text-green-700 font-medium">Cabang:</p>
+                            <p class="font-semibold text-gray-900" id="modal_cabang">-</p>
+                        </div>
+                        <div>
                             <p class="text-green-700 font-medium">Jenis Acara:</p>
                             <p class="font-semibold text-gray-900" id="modal_jenis">-</p>
                         </div>
@@ -415,7 +423,7 @@
                             <p class="text-green-700 font-medium">Tanggal Acara:</p>
                             <p class="font-semibold text-gray-900" id="modal_tanggal">-</p>
                         </div>
-                        <div>
+                        <div class="col-span-2">
                             <p class="text-green-700 font-medium">Sudah Dibayar:</p>
                             <p class="font-semibold text-blue-700" id="modal_total_bayar">Rp 0</p>
                         </div>
@@ -537,6 +545,9 @@
 
             document.getElementById('booking_id').value = booking.id;
 
+            // Cabang info
+            document.getElementById('modal_cabang').textContent = booking.cabang?.nama || '-';
+
             // Handle booking data with null safety
             if (booking.buka_jadwal) {
                 document.getElementById('modal_jenis').textContent = booking.buka_jadwal.jenis_acara?.nama || '-';
@@ -556,7 +567,7 @@
             }
 
             // Calculate total bayar
-            const totalBayar = booking.pembayaran.reduce((sum, p) => sum + parseFloat(p.nominal), 0);
+            const totalBayar = booking.transaksi_pembayaran.reduce((sum, p) => sum + parseFloat(p.nominal), 0);
             document.getElementById('modal_total_bayar').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(
                 totalBayar);
 
@@ -564,7 +575,7 @@
             const jenisBayarSelect = document.getElementById('jenis_bayar');
             jenisBayarSelect.innerHTML = '<option value="">Pilih Jenis Bayar</option>';
 
-            const sudahBayarDP = booking.pembayaran.some(p => p.jenis_bayar === 'DP');
+            const sudahBayarDP = booking.transaksi_pembayaran.some(p => p.jenis_bayar === 'DP');
 
             if (!sudahBayarDP) {
                 jenisBayarSelect.innerHTML += '<option value="DP">DP (Down Payment) - Wajib</option>';

@@ -1,19 +1,20 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\BukaJadwalController;
-use App\Http\Controllers\CateringController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\JenisAcaraController;
-use App\Http\Controllers\LaporanController;
-use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SesiController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CabangController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\CateringController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BukaJadwalController;
+use App\Http\Controllers\JenisAcaraController;
+use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\UserDashboardController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 
 
 /*
@@ -101,6 +102,10 @@ Route::middleware('auth')->group(function () {
 
             // Master Data Master
             Route::prefix('master')->name('master.')->group(function () {
+
+                // Cabang
+                Route::resource('cabang', CabangController::class);
+                
                 // Sesi
                 Route::resource('sesi', SesiController::class);
 
@@ -115,9 +120,8 @@ Route::middleware('auth')->group(function () {
                 // Catering
                 Route::resource('catering', CateringController::class);
 
-                 // Role
-                 Route::resource('role', RoleController::class);
-
+                // Role
+                Route::resource('role', RoleController::class);
             });
 
             // User Management

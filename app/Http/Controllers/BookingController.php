@@ -84,13 +84,12 @@ class BookingController extends Controller
                 ->orderBy('tanggal')
                 ->get();
 
-            // Get users yang sudah pernah booking di cabang ini
-            $userIds = TransaksiBooking::where('cabang_id', $currentUser->cabang_id)
-                ->distinct()
-                ->pluck('user_id')
-                ->toArray();
-            $userList = User::whereIn('id', $userIds)
+            // ✅ FIX: Ambil SEMUA user yang terdaftar di cabang ini (dengan role USER)
+            $userList = User::where('cabang_id', $currentUser->cabang_id)
                 ->where('status_users', 'active')
+                ->whereHas('role', function ($q) {
+                    $q->where('kode', 'USER');
+                })
                 ->orderBy('nama')
                 ->get();
 
@@ -134,13 +133,14 @@ class BookingController extends Controller
             'user_id' => [
                 'required',
                 'exists:users,id',
-                // User harus pernah booking di cabang ini
+                // ✅ FIX: User harus terdaftar di cabang yang sama
                 function ($attribute, $value, $fail) use ($cabangId) {
-                    $hasBooking = TransaksiBooking::where('user_id', $value)
-                        ->where('cabang_id', $cabangId)
-                        ->exists();
-                    if (!$hasBooking) {
-                        $fail('User belum pernah booking di cabang Anda.');
+                    $user = User::find($value);
+                    if ($user && $user->cabang_id !== $cabangId) {
+                        $fail('User tidak terdaftar di cabang Anda.');
+                    }
+                    if ($user && $user->role->kode !== 'USER') {
+                        $fail('Hanya user dengan role User yang dapat melakukan booking.');
                     }
                 },
             ],
@@ -242,7 +242,17 @@ class BookingController extends Controller
         $cabangId = $currentUser->cabang_id;
 
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                // User harus terdaftar di cabang yang sama
+                function ($attribute, $value, $fail) use ($cabangId) {
+                    $user = User::find($value);
+                    if ($user && $user->cabang_id !== $cabangId) {
+                        $fail('User tidak terdaftar di cabang Anda.');
+                    }
+                },
+            ],
             'bukajadwal_id' => [
                 'required',
                 'exists:buka_jadwal,id',

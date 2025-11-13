@@ -31,6 +31,7 @@ class User extends Authenticatable
         'foto',
         'role_id',
         'cabang_id',
+        'created_by', // ← Tambahkan ini
         'status_users',
     ];
 
@@ -51,6 +52,17 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+
+    public function createdUsers()
+    {
+        return $this->hasMany(User::class, 'created_by');
     }
 
     public function cabang()
@@ -78,4 +90,6 @@ class User extends Authenticatable
     {
         return $this->role->kode === 'PIMPINAN';
     }
+
+
 }

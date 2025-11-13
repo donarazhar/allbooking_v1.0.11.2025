@@ -3,27 +3,55 @@
 namespace App\Http\Controllers;
 
 use App\Models\TransaksiPembayaran;
+use App\Models\TransaksiBooking;
+use App\Models\Cabang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PembayaranController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pembayaran = TransaksiPembayaran::with([
-            'bookings.user',
-            'bookings.bukaJadwal.sesi',
-            'bookings.bukaJadwal.jenisAcara'
-        ])
-            ->orderBy('tgl_pembayaran', 'desc')
-            ->get();
-        // dd($pembayaran);
-        return view('transaksi.pembayaran.index', compact('pembayaran'));
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->role->kode === 'SUPERADMIN';
+
+        // Query builder
+        $query = TransaksiPembayaran::with([
+            'transaksiBooking.user',
+            'transaksiBooking.bukaJadwal.sesi',
+            'transaksiBooking.bukaJadwal.jenisAcara',
+            'cabang'
+        ]);
+
+        // Filter by cabang for Admin Cabang
+        if (!$isSuperAdmin) {
+            $query->where('cabang_id', $currentUser->cabang_id);
+        } else {
+            // Super Admin: optional filter by cabang
+            if ($request->filled('cabang_id')) {
+                $query->where('cabang_id', $request->cabang_id);
+            }
+        }
+
+        $pembayaran = $query->orderBy('tgl_pembayaran', 'desc')->get();
+
+        // Get cabang list for filter (Super Admin only)
+        $cabangList = $isSuperAdmin ? Cabang::orderBy('nama')->get() : collect();
+
+        return view('admin.transaksi.pembayaran.index', compact('pembayaran', 'cabangList', 'isSuperAdmin'));
     }
 
     public function store(Request $request)
     {
+        $currentUser = Auth::user();
+
+        // Only Admin Cabang can create
+        if ($currentUser->role->kode === 'SUPERADMIN') {
+            return back()->with('error', 'Super Admin tidak dapat menambah pembayaran. Fitur ini khusus untuk Admin Cabang.');
+        }
+
         $validated = $request->validate([
             'tgl_pembayaran' => 'required|date',
             'booking_id' => 'required|exists:transaksi_booking,id',
@@ -45,18 +73,43 @@ class PembayaranController extends Controller
             'bukti_bayar.max' => 'Ukuran bukti bayar maksimal 2MB'
         ]);
 
+        // Verify booking belongs to admin's cabang
+        $booking = TransaksiBooking::where('id', $validated['booking_id'])
+            ->where('cabang_id', $currentUser->cabang_id)
+            ->first();
+
+        if (!$booking) {
+            return back()->with('error', 'Booking tidak ditemukan atau bukan milik cabang Anda!');
+        }
+
         DB::beginTransaction();
         try {
             // Upload bukti bayar jika ada
             if ($request->hasFile('bukti_bayar')) {
+                $uploadPath = public_path('uploads/bukti_bayar');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
                 $file = $request->file('bukti_bayar');
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/bukti_bayar'), $filename);
+                $filename = 'bayar_' . $booking->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadPath, $filename);
                 $validated['bukti_bayar'] = $filename;
             }
 
+            // Add cabang_id
+            $validated['cabang_id'] = $currentUser->cabang_id;
+
             // Create pembayaran
-            Pembayaran::create($validated);
+            TransaksiPembayaran::create($validated);
+
+            // If DP, activate booking
+            if ($validated['jenis_bayar'] === 'DP') {
+                $booking->update([
+                    'status_booking' => 'active',
+                    'tgl_expired_booking' => null
+                ]);
+            }
 
             DB::commit();
 
@@ -78,8 +131,20 @@ class PembayaranController extends Controller
         }
     }
 
-    public function update(Request $request, Pembayaran $pembayaran)
+    public function update(Request $request, TransaksiPembayaran $pembayaran)
     {
+        $currentUser = Auth::user();
+
+        // Only Admin Cabang can update
+        if ($currentUser->role->kode === 'SUPERADMIN') {
+            return back()->with('error', 'Super Admin tidak dapat mengupdate pembayaran. Fitur ini khusus untuk Admin Cabang.');
+        }
+
+        // Verify pembayaran belongs to admin's cabang
+        if ($pembayaran->cabang_id !== $currentUser->cabang_id) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk mengupdate pembayaran ini!');
+        }
+
         $validated = $request->validate([
             'tgl_pembayaran' => 'required|date',
             'booking_id' => 'required|exists:transaksi_booking,id',
@@ -107,9 +172,14 @@ class PembayaranController extends Controller
                 }
 
                 // Upload bukti baru
+                $uploadPath = public_path('uploads/bukti_bayar');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
                 $file = $request->file('bukti_bayar');
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/bukti_bayar'), $filename);
+                $filename = 'bayar_' . $pembayaran->booking_id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadPath, $filename);
                 $validated['bukti_bayar'] = $filename;
             }
 
@@ -136,8 +206,20 @@ class PembayaranController extends Controller
         }
     }
 
-    public function destroy(Pembayaran $pembayaran)
+    public function destroy(TransaksiPembayaran $pembayaran)
     {
+        $currentUser = Auth::user();
+
+        // Only Admin Cabang can delete
+        if ($currentUser->role->kode === 'SUPERADMIN') {
+            return back()->with('error', 'Super Admin tidak dapat menghapus pembayaran. Fitur ini khusus untuk Admin Cabang.');
+        }
+
+        // Verify pembayaran belongs to admin's cabang
+        if ($pembayaran->cabang_id !== $currentUser->cabang_id) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk menghapus pembayaran ini!');
+        }
+
         DB::beginTransaction();
         try {
             // Hapus file bukti bayar jika ada

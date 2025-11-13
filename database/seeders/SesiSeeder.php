@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Cabang;
 
 class SesiSeeder extends Seeder
 {
@@ -12,36 +13,57 @@ class SesiSeeder extends Seeder
      */
     public function run(): void
     {
-        $sesi = [
+        // Get all cabang
+        $cabangList = Cabang::all();
+
+        // Sesi template dengan kode
+        $sesiTemplates = [
             [
-                'kode' => 'SP',
+                'kode' => 'PAGI',
                 'nama' => 'Sesi Pagi',
                 'jam_mulai' => '08:00:00',
                 'jam_selesai' => '12:00:00',
-                'keterangan' => 'Sesi booking untuk waktu pagi',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'kode' => 'SM',
+                'kode' => 'SIANG',
+                'nama' => 'Sesi Siang',
+                'jam_mulai' => '13:00:00',
+                'jam_selesai' => '17:00:00',
+            ],
+            [
+                'kode' => 'MALAM',
                 'nama' => 'Sesi Malam',
-                'jam_mulai' => '15:00:00',
-                'jam_selesai' => '21:00:00',
-                'keterangan' => 'Sesi booking untuk waktu malam',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'jam_mulai' => '18:00:00',
+                'jam_selesai' => '22:00:00',
             ],
             [
-                'kode' => 'FD',
-                'nama' => 'Full Days',
-                'jam_mulai' => '07:00:00',
-                'jam_selesai' => '13:00:00',
-                'keterangan' => 'Sesi booking untuk acara seminar',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'kode' => 'FULLDAY',
+                'nama' => 'Sesi Full Day',
+                'jam_mulai' => '08:00:00',
+                'jam_selesai' => '22:00:00',
             ],
         ];
 
-        DB::table('sesi')->insert($sesi);
+        // Create sesi untuk setiap cabang
+        foreach ($cabangList as $index => $cabang) {
+            foreach ($sesiTemplates as $sesiIndex => $sesi) {
+                // Generate unique kode per cabang
+                $kodeUnique = $sesi['kode'] . '_' . strtoupper(substr($cabang->nama, 0, 3)) . '_' . ($index + 1);
+
+                DB::table('sesi')->insert([
+                    'cabang_id' => $cabang->id,
+                    'kode' => $kodeUnique,
+                    'nama' => $sesi['nama'],
+                    'jam_mulai' => $sesi['jam_mulai'],
+                    'jam_selesai' => $sesi['jam_selesai'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $this->command->info("✅ Sesi created for: {$cabang->nama}");
+        }
+
+        $this->command->info('🎉 Sesi seeding completed for all cabang!');
     }
 }

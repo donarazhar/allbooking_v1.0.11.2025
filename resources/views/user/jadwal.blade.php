@@ -1,10 +1,10 @@
 @extends('layouts.user')
 
-@section('title', 'Jadwal Aula - Sistem Manajemen Aula')
+@section('title', 'Jadwal Aula - Sistem Booking Aula YPI Al Azhar')
 
 @section('content')
     <div class="space-y-6">
-        {{-- NOTIFICATIONS --}}
+        {{-- NOTIFICATIONS (sama seperti sebelumnya) --}}
         @if (session('success'))
             <div id="successAlert" class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
                 <div class="flex items-center justify-between">
@@ -55,11 +55,26 @@
                 <div>
                     <h1 class="text-3xl font-bold mb-2">Jadwal Aula Tersedia</h1>
                     <p class="text-blue-100">Lihat jadwal tersedia dan buat booking Anda</p>
-                    @if (request('jenis_acara'))
-                        <p class="text-blue-200 text-sm mt-2">
-                            <i class="fas fa-filter mr-1"></i>
-                            Filter: {{ request('jenis_acara') }}
-                        </p>
+                    @if (request('cabang_id') || request('jenis_acara'))
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @if (request('cabang_id'))
+                                @php
+                                    $selectedCabang = \App\Models\Cabang::find(request('cabang_id'));
+                                @endphp
+                                @if ($selectedCabang)
+                                    <span class="inline-flex items-center px-3 py-1 bg-white/20 rounded-full text-sm">
+                                        <i class="fas fa-building mr-1"></i>
+                                        {{ $selectedCabang->nama }}
+                                    </span>
+                                @endif
+                            @endif
+                            @if (request('jenis_acara'))
+                                <span class="inline-flex items-center px-3 py-1 bg-white/20 rounded-full text-sm">
+                                    <i class="fas fa-tag mr-1"></i>
+                                    {{ request('jenis_acara') }}
+                                </span>
+                            @endif
+                        </div>
                     @endif
                 </div>
                 <div class="hidden md:block">
@@ -68,9 +83,138 @@
             </div>
         </div>
 
+        {{-- ✅ NEW: INFO BOX - Tips Pencarian --}}
+        <div id="searchTipsBox"
+            class="bg-gradient-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500 rounded-lg p-6 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start flex-1">
+                    <div class="flex-shrink-0">
+                        <div class="h-12 w-12 bg-cyan-500 rounded-lg flex items-center justify-center shadow-md">
+                            <i class="fas fa-lightbulb text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-lg font-bold text-cyan-900 mb-2 flex items-center">
+                            <i class="fas fa-search mr-2"></i>
+                            Tips Mencari Jadwal
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-cyan-800">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <div
+                                        class="h-6 w-6 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        1
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-semibold text-cyan-900">Pilih Cabang</p>
+                                    <p class="text-cyan-700 text-xs mt-0.5">Filter jadwal berdasarkan lokasi cabang yang
+                                        Anda inginkan</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <div
+                                        class="h-6 w-6 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        2
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-semibold text-cyan-900">Pilih Bulan</p>
+                                    <p class="text-cyan-700 text-xs mt-0.5">Tentukan bulan yang sesuai dengan rencana acara
+                                        Anda</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <div
+                                        class="h-6 w-6 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        3
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-semibold text-cyan-900">Pilih Jenis Acara</p>
+                                    <p class="text-cyan-700 text-xs mt-0.5">Filter berdasarkan jenis acara (Pernikahan,
+                                        Seminar, dll)</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <div
+                                        class="h-6 w-6 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        4
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-semibold text-cyan-900">Pilih Sesi</p>
+                                    <p class="text-cyan-700 text-xs mt-0.5">Tentukan waktu sesi yang sesuai (Pagi, Siang,
+                                        Malam)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3 bg-white/60 rounded-lg border border-cyan-200">
+                            <div class="flex items-start">
+                                <i class="fas fa-star text-yellow-500 mt-0.5 mr-2"></i>
+                                <p class="text-xs text-cyan-800">
+                                    <span class="font-semibold">Pro Tips:</span>
+                                    Gunakan filter secara bertahap untuk hasil yang lebih spesifik. Klik
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 bg-cyan-100 rounded text-xs font-medium mx-1">
+                                        <i class="fas fa-redo text-xs mr-1"></i>Reset Filter
+                                    </span>
+                                    untuk menghapus semua filter dan melihat semua jadwal tersedia.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeSearchTips()"
+                    class="flex-shrink-0 ml-4 text-cyan-500 hover:text-cyan-700 transition-colors" title="Tutup tips">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- ✅ OPTIONAL: Quick Access Info --}}
+        @if (!request('cabang_id') && !request('jenis_acara'))
+            <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-amber-500 text-lg mr-3 mt-0.5"></i>
+                    <div class="flex-1">
+                        <p class="text-sm text-amber-800">
+                            <span class="font-semibold">Mencari jadwal lebih cepat?</span>
+                            Kembali ke
+                            <a href="{{ route('user.dashboard') }}" class="underline hover:text-amber-900 font-medium">
+                                <i class="fas fa-home mr-1"></i>Dashboard
+                            </a>
+                            dan pilih cabang terlebih dahulu untuk melihat jenis acara yang tersedia.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- FILTER SECTION --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {{-- Filter Cabang --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-building text-primary mr-1"></i>
+                        Cabang
+                    </label>
+                    <select id="filterCabang"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="">Semua Cabang</option>
+                        @foreach ($cabangList as $cabang)
+                            <option value="{{ $cabang->id }}" {{ request('cabang_id') == $cabang->id ? 'selected' : '' }}>
+                                {{ $cabang->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Filter Bulan & Tahun --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-calendar text-primary mr-1"></i>
@@ -79,6 +223,8 @@
                     <input type="month" id="filterBulanTahun" value="{{ date('Y-m') }}"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                 </div>
+
+                {{-- Filter Jenis Acara --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-list text-primary mr-1"></i>
@@ -87,7 +233,7 @@
                     <select id="filterJenis"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                         <option value="">Semua Jenis Acara</option>
-                        @foreach (\App\Models\JenisAcara::all() as $jenis)
+                        @foreach (\App\Models\JenisAcara::select('nama')->distinct()->orderBy('nama')->get() as $jenis)
                             <option value="{{ $jenis->nama }}"
                                 {{ request('jenis_acara') == $jenis->nama ? 'selected' : '' }}>
                                 {{ $jenis->nama }}
@@ -95,6 +241,8 @@
                         @endforeach
                     </select>
                 </div>
+
+                {{-- Filter Sesi --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-clock text-primary mr-1"></i>
@@ -103,7 +251,7 @@
                     <select id="filterSesi"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                         <option value="">Semua Sesi</option>
-                        @foreach (\App\Models\Sesi::all() as $sesi)
+                        @foreach (\App\Models\Sesi::select('nama')->distinct()->orderBy('nama')->get() as $sesi)
                             <option value="{{ $sesi->nama }}">{{ $sesi->nama }}</option>
                         @endforeach
                     </select>
@@ -134,6 +282,9 @@
                     <thead class="bg-gray-50 border-b-2 border-gray-200">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-building mr-1"></i>Cabang
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                 <i class="fas fa-calendar-day mr-1"></i>Hari & Tanggal
                             </th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -151,8 +302,25 @@
                                 $bulanTahun = $tanggalCarbon->format('Y-m');
                             @endphp
                             <tr class="jadwal-row hover:bg-gray-50 transition-colors"
-                                data-bulan-tahun="{{ $bulanTahun }}" data-jenis="{{ $jadwal->jenisAcara->nama ?? '' }}"
+                                data-cabang="{{ $jadwal->cabang_id }}" data-bulan-tahun="{{ $bulanTahun }}"
+                                data-jenis="{{ $jadwal->jenisAcara->nama ?? '' }}"
                                 data-sesi="{{ $jadwal->sesi->nama ?? '' }}">
+
+                                {{-- Cabang --}}
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="h-10 w-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                            <i class="fas fa-building text-white"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900">
+                                                {{ $jadwal->cabang->nama ?? '-' }}</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ Str::limit($jadwal->cabang->alamat ?? '', 30) }}</p>
+                                        </div>
+                                    </div>
+                                </td>
 
                                 {{-- Hari & Tanggal --}}
                                 <td class="px-6 py-4">
@@ -193,12 +361,10 @@
                                                     {{ $jadwal->sesi->jam_selesai }}</span>
                                             @endif
                                         </p>
-                                        @if ($jadwal->keterangan)
-                                            <p class="text-xs text-gray-500 mt-1">
-                                                <i class="fas fa-info-circle mr-1"></i>
-                                                {{ Str::limit($jadwal->keterangan, 60) }}
-                                            </p>
-                                        @endif
+                                        <p class="text-xs text-orange-600 font-medium">
+                                            <i class="fas fa-money-bill-wave mr-1"></i>
+                                            Rp {{ number_format($jadwal->jenisAcara->harga ?? 0, 0, ',', '.') }}
+                                        </p>
                                         <div class="mt-2">
                                             <span
                                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -210,7 +376,7 @@
 
                                 {{-- Aksi --}}
                                 <td class="px-6 py-4 text-center">
-                                    <button onclick='showTncModal(@json($jadwal))'
+                                    <button type="button" onclick='openTncModal(@json($jadwal))'
                                         class="inline-flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
                                         <i class="fas fa-calendar-check mr-2"></i>
                                         Book Sekarang
@@ -219,7 +385,7 @@
                             </tr>
                         @empty
                             <tr id="emptyRow">
-                                <td colspan="3" class="px-6 py-12 text-center">
+                                <td colspan="4" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
                                         <p class="text-gray-600 font-medium text-lg mb-2">Tidak Ada Jadwal Tersedia</p>
@@ -240,7 +406,7 @@
             </div>
         </div>
 
-        {{-- INFO SECTION --}}
+        {{-- INFO SECTION (sama seperti sebelumnya) --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
                 <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
@@ -250,12 +416,12 @@
                     <li class="flex items-start">
                         <span
                             class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-3 flex-shrink-0 text-xs font-semibold">1</span>
-                        <span>Pilih jadwal yang tersedia di tabel</span>
+                        <span>Pilih cabang dan jadwal yang tersedia</span>
                     </li>
                     <li class="flex items-start">
                         <span
                             class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-3 flex-shrink-0 text-xs font-semibold">2</span>
-                        <span>Klik tombol "Book Sekarang" untuk membuka form</span>
+                        <span>Klik tombol "Book Sekarang"</span>
                     </li>
                     <li class="flex items-start">
                         <span
@@ -265,12 +431,12 @@
                     <li class="flex items-start">
                         <span
                             class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-3 flex-shrink-0 text-xs font-semibold">4</span>
-                        <span>Isi form booking dengan lengkap dan benar</span>
+                        <span>Isi form booking dengan lengkap</span>
                     </li>
                     <li class="flex items-start">
                         <span
                             class="bg-blue-500 text-white rounded-full h-6 w-6 flex items-center justify-center mr-3 flex-shrink-0 text-xs font-semibold">5</span>
-                        <span>Tunggu konfirmasi dari admin (maksimal 1x24 jam)</span>
+                        <span>Tunggu konfirmasi admin (1x24 jam)</span>
                     </li>
                 </ol>
             </div>
@@ -282,23 +448,19 @@
                 <ul class="text-sm text-yellow-800 space-y-2">
                     <li class="flex items-start">
                         <i class="fas fa-check text-yellow-600 mr-2 mt-1 flex-shrink-0"></i>
-                        <span>Pastikan profile Anda sudah lengkap (no HP & alamat)</span>
+                        <span>Pastikan profile Anda sudah lengkap</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check text-yellow-600 mr-2 mt-1 flex-shrink-0"></i>
-                        <span>Baca Terms & Conditions dengan teliti sebelum booking</span>
+                        <span>Pilih cabang sesuai lokasi yang diinginkan</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check text-yellow-600 mr-2 mt-1 flex-shrink-0"></i>
-                        <span>Jadwal yang sudah di-booking tidak dapat diubah sepihak</span>
+                        <span>Harga dapat berbeda antar cabang</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check text-yellow-600 mr-2 mt-1 flex-shrink-0"></i>
-                        <span>Catering bersifat opsional (boleh tidak dipilih)</span>
-                    </li>
-                    <li class="flex items-start">
-                        <i class="fas fa-check text-yellow-600 mr-2 mt-1 flex-shrink-0"></i>
-                        <span>Booking akan expired jika tidak ada pembayaran DP dalam 2 minggu</span>
+                        <span>Booking expired dalam 2 minggu tanpa DP</span>
                     </li>
                 </ul>
             </div>
@@ -321,7 +483,43 @@
             </div>
 
             <div id="tncContent" class="flex-1 overflow-y-auto p-6" style="max-height: calc(90vh - 180px);">
-                {{-- TNC CONTENT WILL BE INSERTED HERE BY JAVASCRIPT --}}
+                <div class="prose max-w-none">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">TERMS AND CONDITIONS KHUSUS SEWA PENGGUNAAN FASILITAS
+                        AULA</h2>
+
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                        <p class="text-sm text-blue-900">
+                            Terms and Conditions Khusus Sewa Penggunaan Fasilitas ini merupakan bagian yang tidak
+                            terpisahkan dari Perjanjian
+                            dan memuat ketentuan lebih lanjut sebagai berikut:
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 text-gray-700">
+                        <p><strong>1. Ketentuan Umum</strong></p>
+                        <p>Penyewa wajib mematuhi semua peraturan yang berlaku di aula YPI Al Azhar.</p>
+
+                        <p><strong>2. Pembayaran</strong></p>
+                        <p>Pembayaran dilakukan sesuai dengan skema yang telah ditentukan: DP minimal 30% dari total biaya
+                            sewa.</p>
+
+                        <p><strong>3. Pembatalan</strong></p>
+                        <p>Pembatalan booking dikenakan biaya sesuai ketentuan yang berlaku.</p>
+
+                        <p><strong>4. Tanggung Jawab</strong></p>
+                        <p>Kerusakan fasilitas menjadi tanggung jawab penyewa dan akan dikenakan biaya perbaikan.</p>
+
+                        <p><strong>5. Ketertiban</strong></p>
+                        <p>Penyewa bertanggung jawab penuh atas ketertiban dan keamanan acara.</p>
+                    </div>
+
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mt-6">
+                        <p class="text-sm font-semibold text-red-900">
+                            Dengan mencentang persetujuan di bawah, Anda menyatakan telah membaca, memahami, dan menyetujui
+                            seluruh Terms & Conditions di atas dan siap memenuhi semua ketentuan yang berlaku.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-xl">
@@ -372,12 +570,20 @@
                     </h4>
                     <div class="grid grid-cols-2 gap-3 text-sm">
                         <div>
+                            <p class="text-blue-700 font-medium">Cabang:</p>
+                            <p class="font-semibold text-gray-900" id="modal_cabang">-</p>
+                        </div>
+                        <div>
                             <p class="text-blue-700 font-medium">Jenis Acara:</p>
                             <p class="font-semibold text-gray-900" id="modal_jenis">-</p>
                         </div>
                         <div>
                             <p class="text-blue-700 font-medium">Sesi:</p>
                             <p class="font-semibold text-gray-900" id="modal_sesi">-</p>
+                        </div>
+                        <div>
+                            <p class="text-blue-700 font-medium">Harga:</p>
+                            <p class="font-semibold text-orange-600" id="modal_harga">-</p>
                         </div>
                         <div>
                             <p class="text-blue-700 font-medium">Hari:</p>
@@ -409,17 +615,9 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Catering <span class="text-gray-500 text-xs">(Opsional)</span>
                     </label>
-                    <select name="catering_id"
+                    <select name="catering_id" id="catering_select"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                         <option value="">Tanpa Catering</option>
-                        @foreach (\App\Models\Catering::all() as $catering)
-                            <option value="{{ $catering->id }}">
-                                {{ $catering->nama }}
-                                @if ($catering->kontak)
-                                    - {{ $catering->kontak }}
-                                @endif
-                            </option>
-                        @endforeach
                     </select>
                     <p class="text-xs text-gray-500 mt-1">
                         <i class="fas fa-utensils mr-1"></i>Pilih catering jika diperlukan untuk acara Anda
@@ -484,304 +682,78 @@
         // Global variable to store selected jadwal
         let selectedJadwal = null;
 
-        // Terms & Conditions Content
-        const tncHTML = `
-<div class="prose max-w-none">
-    <h2 class="text-2xl font-bold text-gray-900 mb-4">TERMS AND CONDITIONS KHUSUS SEWA PENGGUNAAN FASILITAS AULA</h2>
-    
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-        <p class="text-sm text-blue-900">
-            Terms and Conditions Khusus Sewa Penggunaan Fasilitas ini merupakan bagian yang tidak terpisahkan dari Perjanjian 
-            dan memuat ketentuan lebih lanjut sebagai berikut:
-        </p>
-    </div>
+        // ✅ NEW: Catering data per cabang from backend
+        const cateringPerCabang = @json($cateringPerCabang);
 
-    <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">1. OPERASIONAL DAN LAYOUT EVENT</h3>
-    <div class="space-y-3 text-sm text-gray-700">
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.1</span>
-            <div>
-                <p class="font-medium mb-1">Kapasitas pengunjung:</p>
-                <ul class="list-disc list-inside ml-4">
-                    <li>Ruang Cettelya (Gedung Serbaguna): 1.500 orang</li>
-                    <li>Ruang Vanda (Gedung Serbaguna): 750 orang</li>
-                    <li>Aula (Masjid Al-Bina): 750 orang</li>
-                </ul>
-            </div>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.2</span>
-            <p>PIHAK KEDUA wajib menyampaikan rancangan gambar, desain, dan/atau layout Event kepada PIHAK PERTAMA serta memperoleh persetujuan terlebih dahulu.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.3</span>
-            <p>PIHAK KEDUA wajib berkoordinasi dengan PIHAK PERTAMA selama Masa Sewa, termasuk pemaparan awal, technical meeting, dan rapat pasca kegiatan.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.4</span>
-            <p>PIHAK KEDUA wajib menyerahkan izin keramaian dari Kepolisian minimal 6 jam sebelum Event dimulai.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.5</span>
-            <p>PIHAK KEDUA dilarang meletakan/mendirikan panggung di area Outdoor.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.6</span>
-            <p>Konstruksi panggung dilarang merusak struktur fasilitas eksisting.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.7</span>
-            <p>Untuk aliran listrik, PIHAK KEDUA wajib memasang kabel listrik di darat (tidak menggantung) dengan proteksi (cable protector).</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.8</span>
-            <p>PIHAK KEDUA dilarang menutup rambu atau papan tanda (signage).</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.9</span>
-            <div>
-                <p class="font-medium mb-1">Waktu bongkar-muat barang (Loading-Unloading) Free:</p>
-                <ul class="list-disc list-inside ml-4">
-                    <li>Pagi (Sesi 1): Loading 04.00-08.00 WIB, Unloading 14.00-16.00 WIB</li>
-                    <li>Siang (Sesi 2): Loading 14.00-16.00 WIB, Unloading 22.00-02.00 WIB</li>
-                    <li>Ketentuan hanya berlaku saat ada 2 event dalam hari yang sama</li>
-                    <li>Jika hanya 1 event: waktu loading dan unloading free adalah 4 jam sebelum/setelah event</li>
-                </ul>
-            </div>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.10</span>
-            <p>Waktu pelaksanaan check sound sesuai dengan kebutuhan.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.11</span>
-            <div>
-                <p class="font-medium mb-1">Waktu pelaksanaan Event:</p>
-                <ul class="list-disc list-inside ml-4">
-                    <li>Pagi (Sesi 1): 08.00 - 14.00 WIB</li>
-                    <li>Siang (Sesi 2): 16.00 - 22.00 WIB</li>
-                </ul>
-            </div>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.12</span>
-            <p>Event di Aula Masjid Al-Bina harus dihentikan sejenak saat memasuki waktu sholat.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.13</span>
-            <p>Seluruh pekerja wajib menggunakan kartu identitas dan safety suite sesuai standar K3.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.14</span>
-            <p>PIHAK KEDUA dilarang mengunggah dan menyebarkan dokumentasi saat Loading-Unloading, kecuali diwajibkan oleh instansi berwenang.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">1.15</span>
-            <p>Suplai listrik hanya dari PLN termasuk untuk backup, dilarang menggunakan selain UPS PLN kecuali ada persetujuan khusus.</p>
-        </div>
-    </div>
+        // Open T&C Modal
+        function openTncModal(jadwal) {
+            console.log('✅ openTncModal called with:', jadwal);
 
-    <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">2. KEBERSIHAN</h3>
-    <div class="space-y-3 text-sm text-gray-700">
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">2.1</span>
-            <p>Rasio petugas kebersihan terhadap jumlah pengunjung adalah 1:250.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">2.2</span>
-            <p>PIHAK KEDUA wajib membersihkan stiker atau tanda penomoran yang ditempelkan pada fasilitas.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">2.3</span>
-            <p>PIHAK KEDUA wajib memberikan arahan kepada pengunjung untuk menjaga kebersihan.</p>
-        </div>
-    </div>
-
-    <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">3. KEAMANAN, KESELAMATAN, DAN KETERTIBAN</h3>
-    <div class="space-y-3 text-sm text-gray-700">
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.1</span>
-            <p>Rasio petugas keamanan terhadap jumlah pengunjung adalah 1:250.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.2</span>
-            <p>Area evakuasi: Lantai 1 sisi Timur & Barat; Lantai 2 sisi Selatan.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.3</span>
-            <p>PIHAK KEDUA wajib memberikan proposal/rencana Event dengan informasi akses, pengamanan, dan jalur evakuasi (Crowd Management).</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.4</span>
-            <p>Pihak keamanan PIHAK PERTAMA berhak mereviu rencana pengamanan dan mengakses fasilitas untuk pengamanan aset.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.5</span>
-            <p>PIHAK PERTAMA wajib memastikan jalur evakuasi bebas hambatan.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.6</span>
-            <p>PIHAK KEDUA wajib memberikan pelatihan K3 (safety induction) kepada petugas keamanan.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.7</span>
-            <p>PIHAK KEDUA wajib menyediakan kendaraan pemadam kebakaran beserta petugas.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.8</span>
-            <p>PIHAK KEDUA wajib memasang peta Event dengan informasi akses, fasilitas, dan jalur evakuasi di setiap akses masuk.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">3.9</span>
-            <p>PIHAK KEDUA wajib menempatkan minimal 1 tenaga keamanan di setiap Exit Gate, 20 menit sebelum dibuka.</p>
-        </div>
-    </div>
-
-    <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">4. SPECIAL EFFECT</h3>
-    <div class="space-y-3 text-sm text-gray-700">
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">4.1</span>
-            <p>PIHAK KEDUA dilarang menggunakan konfeti tanpa persetujuan tertulis. Jika diizinkan: berbahan plastik lebar min. 10 cm, wajib serahkan mekanisme pembersihan, dilarang di Ruang Vanda & Cattleya.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">4.2</span>
-            <p>PIHAK KEDUA wajib menyediakan APAR di area panggung.</p>
-        </div>
-    </div>
-
-    <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">5. TENANT DAN RETAIL</h3>
-    <div class="space-y-3 text-sm text-gray-700">
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">5.1</span>
-            <p>Area Food and Beverage ditempatkan di Selasar Lantai 1 dan 2.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">5.2</span>
-            <p>Dilarang penempatan di area taman, wajib tambah Field Cover/Flooring untuk tenda/booth.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">5.3</span>
-            <div>
-                <p class="font-medium mb-1">PIHAK KEDUA wajib memastikan Tenant FnB-nya:</p>
-                <ul class="list-disc list-inside ml-4">
-                    <li>Memiliki dan menggunakan ID</li>
-                    <li>Menggunakan transaksi non-tunai</li>
-                    <li>Tidak masak-memasak (Ready to Eat saja)</li>
-                    <li>Tidak jual rokok, alkohol, sejenisnya</li>
-                    <li>Menyediakan tempat sampah masing-masing</li>
-                    <li>Peralatan sekali pakai yang memenuhi SNI</li>
-                    <li>Menjaga kehigenisan</li>
-                    <li>Tidak buang limbah ke saluran PIHAK PERTAMA</li>
-                    <li>Min. 2 petugas kebersihan per tenant</li>
-                    <li>Gas: Brightgas/LPG min. 5 kg dengan pelindung dan APAR</li>
-                </ul>
-            </div>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">5.4</span>
-            <p>PIHAK KEDUA wajib sediakan sarana pembuangan sampah basah/kering dan tempat pembilasan.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">5.5</span>
-            <p>PIHAK KEDUA wajib memiliki jadwal inspeksi kebersihan periodik.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">5.6</span>
-            <p>PIHAK KEDUA sediakan area khusus merokok pada titik-titik tertentu.</p>
-        </div>
-    </div>
-
-    <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">6. HUBUNGAN DENGAN VENDOR, MITRA, DAN PIHAK KETIGA</h3>
-    <div class="space-y-3 text-sm text-gray-700">
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">6.1</span>
-            <p>PIHAK KEDUA bertanggung jawab atas segala perikatan dan koordinasi dengan pihak ketiga, termasuk vendor, mitra, dan tenant selama Masa Sewa.</p>
-        </div>
-        <div class="flex items-start">
-            <span class="font-semibold mr-2">6.2</span>
-            <p>PIHAK PERTAMA berhak menindaklanjuti setiap pelanggaran, kerusakan, atau ketidakbersihan yang ditimbulkan, termasuk: potong jaminan, tagih ganti rugi, dan/atau laporan kepolisian.</p>
-        </div>
-    </div>
-
-    <div class="bg-red-50 border-l-4 border-red-500 p-4 mt-6">
-        <p class="text-sm font-semibold text-red-900">
-            Dengan mencentang persetujuan di bawah, Anda menyatakan telah membaca, memahami, dan menyetujui 
-            seluruh Terms & Conditions di atas dan siap memenuhi semua ketentuan yang berlaku.
-        </p>
-    </div>
-</div>
-`;
-
-        // Show T&C Modal
-        function showTncModal(jadwal) {
-            console.log('showTncModal called with:', jadwal);
             selectedJadwal = jadwal;
 
-            // Load TNC content
-            document.getElementById('tncContent').innerHTML = tncHTML;
-
-            // Reset checkbox and button
             const checkbox = document.getElementById('agreeTnc');
             const continueBtn = document.getElementById('btnContinue');
 
-            checkbox.checked = false;
-            continueBtn.disabled = true;
+            if (checkbox && continueBtn) {
+                checkbox.checked = false;
+                continueBtn.disabled = true;
+            }
 
-            // Show TNC modal
-            document.getElementById('tncModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-
-            console.log('T&C Modal shown');
+            const tncModal = document.getElementById('tncModal');
+            if (tncModal) {
+                tncModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                console.log('✅ T&C Modal shown successfully');
+            } else {
+                console.error('❌ T&C Modal element not found!');
+            }
         }
 
-        // Close T&C Modal
         function closeTncModal() {
             console.log('closeTncModal called');
-            document.getElementById('tncModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            const tncModal = document.getElementById('tncModal');
+            if (tncModal) {
+                tncModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
             selectedJadwal = null;
         }
 
-        // Proceed to Booking Form
         function proceedToBooking() {
             console.log('proceedToBooking called with selectedJadwal:', selectedJadwal);
 
             if (!selectedJadwal) {
-                console.error('No jadwal selected!');
+                console.error('❌ No jadwal selected!');
                 alert('Error: Tidak ada jadwal yang dipilih. Silakan coba lagi.');
                 return;
             }
 
-            // IMPORTANT: Save jadwal to local variable BEFORE closing modal
             const jadwalToBook = selectedJadwal;
+            closeTncModal();
 
-            // Close TNC modal (this sets selectedJadwal = null)
-            document.getElementById('tncModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-
-            // Wait for transition then open booking modal with saved jadwal
             setTimeout(function() {
                 console.log('Opening booking modal with saved jadwal...');
                 openBookingModal(jadwalToBook);
             }, 300);
         }
 
-        // Open Booking Modal
         function openBookingModal(jadwal) {
             console.log('openBookingModal called with:', jadwal);
 
             if (!jadwal) {
-                console.error('Jadwal is null or undefined!');
+                console.error('❌ Jadwal is null or undefined!');
                 return;
             }
 
-            // Fill form dengan data jadwal
             document.getElementById('booking_jadwal_id').value = jadwal.id;
+            document.getElementById('modal_cabang').textContent = jadwal.cabang?.nama || '-';
             document.getElementById('modal_jenis').textContent = jadwal.jenis_acara?.nama || '-';
             document.getElementById('modal_sesi').textContent = jadwal.sesi?.nama || '-';
             document.getElementById('modal_hari').textContent = jadwal.hari || '-';
 
-            // Format tanggal
+            const harga = jadwal.jenis_acara?.harga || 0;
+            document.getElementById('modal_harga').textContent = 'Rp ' + harga.toLocaleString('id-ID');
+
             const tanggal = new Date(jadwal.tanggal);
             const options = {
                 year: 'numeric',
@@ -790,57 +762,106 @@
             };
             document.getElementById('modal_tanggal').textContent = tanggal.toLocaleDateString('id-ID', options);
 
-            // Waktu sesi
             const waktu = jadwal.sesi ? `${jadwal.sesi.jam_mulai} - ${jadwal.sesi.jam_selesai}` : '-';
             document.getElementById('modal_waktu').textContent = waktu;
 
-            // Show booking modal
-            document.getElementById('bookingModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            // ✅ FIX: Populate catering based on cabang
+            populateCatering(jadwal.cabang_id);
 
-            console.log('Booking Modal shown');
+            const bookingModal = document.getElementById('bookingModal');
+            if (bookingModal) {
+                bookingModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                console.log('✅ Booking Modal shown successfully');
+            }
         }
 
-        // Close Booking Modal
+        // ✅ FIX: Populate catering function
+        function populateCatering(cabangId) {
+            console.log('Populating catering for cabang_id:', cabangId);
+
+            const cateringSelect = document.getElementById('catering_select');
+            cateringSelect.innerHTML = '<option value="">Tanpa Catering</option>';
+
+            // Get catering list for this cabang
+            const cateringList = cateringPerCabang[cabangId] || [];
+
+            console.log('Catering list for this cabang:', cateringList);
+
+            if (cateringList.length === 0) {
+                console.log('⚠️ No catering available for this cabang');
+                return;
+            }
+
+            // Add catering options
+            cateringList.forEach(catering => {
+                const option = document.createElement('option');
+                option.value = catering.id;
+                option.textContent = catering.nama;
+
+                // Add phone number if exists
+                if (catering.no_hp) {
+                    option.textContent += ' - ' + catering.no_hp;
+                }
+
+                cateringSelect.appendChild(option);
+            });
+
+            console.log('✅ Catering options populated:', cateringList.length, 'options');
+        }
+
         function closeBookingModal() {
             console.log('closeBookingModal called');
-            document.getElementById('bookingModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            const bookingModal = document.getElementById('bookingModal');
+            if (bookingModal) {
+                bookingModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
             document.getElementById('bookingForm').reset();
         }
 
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM Content Loaded - Initializing...');
-
-            // Setup checkbox event listener
-            const agreeCheckbox = document.getElementById('agreeTnc');
-            const continueBtn = document.getElementById('btnContinue');
-
-            if (agreeCheckbox && continueBtn) {
-                agreeCheckbox.addEventListener('change', function() {
-                    console.log('Checkbox changed. Checked:', this.checked);
-                    continueBtn.disabled = !this.checked;
-                });
-                console.log('Checkbox event listener attached');
-            } else {
-                console.error('Checkbox or button not found!');
+        // ✅ Close Search Tips Function
+        function closeSearchTips() {
+            const tipsBox = document.getElementById('searchTipsBox');
+            if (tipsBox) {
+                tipsBox.style.transition = 'opacity 0.3s, transform 0.3s';
+                tipsBox.style.opacity = '0';
+                tipsBox.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    tipsBox.style.display = 'none';
+                    localStorage.setItem('jadwalSearchTipsClosed_v2', 'true');
+                }, 300);
             }
+        }
 
-            // Filter functionality
-            document.getElementById('filterBulanTahun').addEventListener('change', filterJadwal);
-            document.getElementById('filterJenis').addEventListener('change', filterJadwal);
-            document.getElementById('filterSesi').addEventListener('change', filterJadwal);
+        // ✅ Show Search Tips Function
+        function showSearchTips() {
+            const tipsBox = document.getElementById('searchTipsBox');
+            if (tipsBox) {
+                tipsBox.style.display = 'block';
+                tipsBox.style.opacity = '0';
+                tipsBox.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    tipsBox.style.transition = 'opacity 0.3s, transform 0.3s';
+                    tipsBox.style.opacity = '1';
+                    tipsBox.style.transform = 'translateY(0)';
+                }, 10);
+                localStorage.removeItem('jadwalSearchTipsClosed_v2');
+            }
+        }
 
-            // Initial filter
-            filterJadwal();
-        });
-
-        // Filter functionality
         function filterJadwal() {
+            const cabang = document.getElementById('filterCabang').value;
             const bulanTahun = document.getElementById('filterBulanTahun').value;
-            const jenis = document.getElementById('filterJenis').value.toLowerCase();
-            const sesi = document.getElementById('filterSesi').value.toLowerCase();
+            const jenis = document.getElementById('filterJenis').value;
+            const sesi = document.getElementById('filterSesi').value;
+
+            console.log('Filter applied:', {
+                cabang,
+                bulanTahun,
+                jenis,
+                sesi
+            });
 
             const rows = document.querySelectorAll('.jadwal-row');
             const noResults = document.getElementById('noResults');
@@ -848,15 +869,17 @@
             let visibleCount = 0;
 
             rows.forEach(row => {
+                const rowCabang = row.getAttribute('data-cabang');
                 const rowBulanTahun = row.getAttribute('data-bulan-tahun');
-                const rowJenis = row.getAttribute('data-jenis').toLowerCase();
-                const rowSesi = row.getAttribute('data-sesi').toLowerCase();
+                const rowJenis = row.getAttribute('data-jenis');
+                const rowSesi = row.getAttribute('data-sesi');
 
+                const matchCabang = !cabang || rowCabang === cabang;
                 const matchBulanTahun = !bulanTahun || rowBulanTahun === bulanTahun;
-                const matchJenis = !jenis || rowJenis.includes(jenis);
-                const matchSesi = !sesi || rowSesi.includes(sesi);
+                const matchJenis = !jenis || rowJenis === jenis;
+                const matchSesi = !sesi || rowSesi === sesi;
 
-                if (matchBulanTahun && matchJenis && matchSesi) {
+                if (matchCabang && matchBulanTahun && matchJenis && matchSesi) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -876,19 +899,84 @@
 
             const filterStatus = document.getElementById('filterStatus');
             const currentMonth = '{{ date('Y-m') }}';
-            if (bulanTahun !== currentMonth || jenis || sesi) {
+            if (cabang || bulanTahun !== currentMonth || jenis || sesi) {
                 filterStatus.classList.remove('hidden');
             } else {
                 filterStatus.classList.add('hidden');
             }
+
+            console.log('Filter complete. Visible:', visibleCount);
         }
 
         function resetFilter() {
+            document.getElementById('filterCabang').value = '';
             document.getElementById('filterBulanTahun').value = '{{ date('Y-m') }}';
             document.getElementById('filterJenis').value = '';
             document.getElementById('filterSesi').value = '';
             filterJadwal();
         }
+
+        // ✅ Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM Content Loaded - Initializing...');
+            console.log('📦 Catering data loaded:', cateringPerCabang);
+
+            // Setup checkbox event listener
+            const agreeCheckbox = document.getElementById('agreeTnc');
+            const continueBtn = document.getElementById('btnContinue');
+
+            if (agreeCheckbox && continueBtn) {
+                agreeCheckbox.addEventListener('change', function() {
+                    console.log('Checkbox changed. Checked:', this.checked);
+                    continueBtn.disabled = !this.checked;
+                });
+                console.log('✅ Checkbox event listener attached');
+            } else {
+                console.error('❌ Checkbox or button not found!');
+            }
+
+            // Attach filter event listeners
+            document.getElementById('filterCabang').addEventListener('change', filterJadwal);
+            document.getElementById('filterBulanTahun').addEventListener('change', filterJadwal);
+            document.getElementById('filterJenis').addEventListener('change', filterJadwal);
+            document.getElementById('filterSesi').addEventListener('change', filterJadwal);
+
+            // Run initial filter
+            filterJadwal();
+
+            // ✅ Handle Search Tips Box
+            const tipsClosed = localStorage.getItem('jadwalSearchTipsClosed_v2');
+            const tipsBox = document.getElementById('searchTipsBox');
+
+            console.log('Tips closed status:', tipsClosed);
+
+            if (tipsClosed === 'true' && tipsBox) {
+                tipsBox.style.display = 'none';
+                console.log('✅ Tips box hidden (user closed before)');
+
+                const filterSection = document.querySelector(
+                    '.bg-white.rounded-xl.shadow-sm.border.border-gray-100');
+                if (filterSection && !document.getElementById('showTipsBtn')) {
+                    const showTipsBtn = document.createElement('div');
+                    showTipsBtn.id = 'showTipsBtn';
+                    showTipsBtn.className = 'mt-3 pt-3 border-t border-gray-200';
+                    showTipsBtn.innerHTML = `
+                    <button onclick="showSearchTips(); this.parentElement.remove();" 
+                        class="text-xs text-cyan-600 hover:text-cyan-800 transition-colors flex items-center">
+                        <i class="fas fa-lightbulb mr-1"></i>
+                        Tampilkan tips pencarian
+                    </button>
+                `;
+                    filterSection.appendChild(showTipsBtn);
+                    console.log('✅ Show tips button added');
+                }
+            } else if (tipsBox) {
+                tipsBox.style.display = 'block';
+                console.log('✅ Tips box shown (first time or reopened)');
+            }
+
+            console.log('✅ All event listeners attached successfully');
+        });
 
         // Form submit loading state
         const bookingForm = document.getElementById('bookingForm');

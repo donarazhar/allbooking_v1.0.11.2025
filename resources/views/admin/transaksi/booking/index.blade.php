@@ -128,15 +128,20 @@
             </div>
         </div>
 
-        {{-- Info Box untuk Super Admin --}}
-        @if ($isSuperAdmin)
+        @if (!$isSuperAdmin)
             <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
                 <div class="flex items-start">
                     <i class="fas fa-info-circle text-blue-500 mr-3 mt-0.5"></i>
                     <div class="text-sm text-blue-800">
-                        <p class="font-semibold mb-1">Mode View Only</p>
-                        <p>Sebagai Super Admin, Anda dapat melihat semua booking dari seluruh cabang. Pengelolaan booking
-                            (tambah/edit/hapus) dilakukan oleh Admin masing-masing cabang.</p>
+                        <p class="font-semibold mb-1">Informasi Booking</p>
+                        <ul class="space-y-1 list-disc list-inside">
+                            <li>User yang dapat melakukan booking: Semua user dengan role <strong>User</strong> yang
+                                terdaftar di cabang <strong>{{ $cabangInfo->nama }}</strong></li>
+                            <li>Jadwal yang tersedia: Hanya jadwal dengan status <strong>Available</strong> di cabang Anda
+                            </li>
+                            <li>Status jadwal akan otomatis berubah menjadi <strong>Booked</strong> setelah booking dibuat
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>

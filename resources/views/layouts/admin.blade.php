@@ -79,6 +79,11 @@
                             </button>
                         </div>
                         <div id="manajemen-menu" class="space-y-1 overflow-hidden transition-all duration-300">
+                            <a href="{{ route('admin.master.cabang.index') }}"
+                                class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.master.cabang.*') ? 'active' : '' }}">
+                                <i class="fas fa-user-tag w-5"></i>
+                                <span class="font-medium">Cabang</span>
+                            </a>
                             <a href="{{ route('admin.master.role.index') }}"
                                 class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 transition-colors {{ request()->routeIs('admin.master.role.*') ? 'active' : '' }}">
                                 <i class="fas fa-user-tag w-5"></i>
